@@ -1,0 +1,9 @@
+.project
+.pydevproject
+.settings
+__pycache__
+venv
+*.swp
+config.py
+*~
+*.pyc
