@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified">
+    <xs:element name="error" type="errorType"/>
+    <xs:complexType name="errorType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="message"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

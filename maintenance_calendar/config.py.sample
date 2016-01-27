@@ -1,0 +1,2 @@
+url_keystone = "https://account.lab.fiware.org/user/?access_token="
+url_calendar = "http://xxx.xxx.xxx.xxx:5232/fiware/"

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified">
+    <xs:complexType name="calendar">
+        <xs:sequence>
+            <xs:element type="xs:string" name="summary" minOccurs="1" maxOccurs="1"/>
+            <xs:element type="xs:string" name="description" minOccurs="1" maxOccurs="1"/>
+            <xs:element type="xs:string" name="timeZone" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element type="calendarType" name="calendar"/>
+</xs:schema>

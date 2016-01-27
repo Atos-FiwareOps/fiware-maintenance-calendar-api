@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified">
+    <xs:include schemaLocation="uuid.xsd" />
+    <xs:complexType name="infrastructureType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element type="infrastructureType" name="infrastructure"/>
+</xs:schema>
