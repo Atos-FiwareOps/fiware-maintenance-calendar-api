@@ -3,6 +3,7 @@
 .settings
 __pycache__
 venv
+varios
 *.swp
 config.py
 *~
