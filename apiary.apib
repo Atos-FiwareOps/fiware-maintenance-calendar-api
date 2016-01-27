@@ -1,0 +1,224 @@
+FORMAT: 1A
+
+# Maintenance Calendar
+Maintenance Calendar is a API allowing the front end components (Fi-Dash component) to view and manage events related with the maintenance of the infrastructure of FIWARE. 
+
+There are two types of events:
+
+1. The maintenance events associated to a specific node. They will be managed by the own node and they only create events for their node, if they have the infrastructure owner role. For example the Trento Organization has user with the privileges to manage the events of the Trento node (create and delete).
+2. The non-maintenance periods associated to all the nodes. These events indicate that during this period it should be forbidden doing maintenance at all the nodes. Only the people with the correct privileges can manage these kind of events, nevertheless with this role (which is the “uptime requester” role), they cannot create events for one node (only in the case that she/he has both roles “infrastructure owner for one node” or the “uptime requester).
+
+This API implements the functionalities to cover the following requirements:
+
+1. The FIWARE users can list all the available Events, including both node events and non-maintenance periods. They can filter by different parameters such as the start date, the end date and the two types of events (by node and by the non-maintenance periods).
+2. The infrastructures can create a new event associated to their node, and the users with the uptime requester role can create events of non-maintenance periods. 
+3. The FIWARE users can get the information of one specific event and see the details.
+4. The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods. 
+
+
+# Group Events
+Resources related to Events in the API.
+
+## Events Collection [/v1/events?location={location}&start={start}&end={end}]
+### List Events [GET]
+
+This functionality allows the FIWARE user to get all the events, including both maintenance events per node and the non-maintenance periods. All the parameters are optional, hence, if the user doesn’t introduce any parameter, they will see all the events. When some parameters are introduced, the result will contain only the events that compliant them. 
+The parameters are optionals:
++ location: the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value. 
++ Start: the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
++ End: the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
+
+For example, with the node attribute:
++ Location: Trento. It returns all the events for the Trento node
++ Location: UptimeRequests. It returns all the events for the non-maintenance periods.
++ Location: Trento + start: 2016-01-01. It returns all the events for the Trento node from 2016-01-01. (The same for the casuistic *Node:UptimeRequests)
++ Location: Trento + start: 2016-01-01 + end: 2018-01-01. It returns all the events for the Trento node between the period [2016-01-01 // 2018-01-01](The same for the casuistic Node:UptimeRequests)
+
+Without the node attribute:
++ Start: 2016-01-01. It returns all the events (both types) from the 2016-01-01.
++ Start: 2016-01-01 + end: 2018-01-01. It returns all the events (both types) between the period [2016-01-01 // 2018-01-01]
+
++ Parameters
+    + location (optional, number) - the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value.
+    + start (optional, string) - the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
+    + end (optional, string) - the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
+
++ Request
+
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
+
++ Response 200 (application/json)
+
+        {
+            "events": [
+                {
+                    "description": "Test description Trento Maintenance",
+                    "dtend": "2016-12-28 20:45:00+0000",
+                    "dtstamp": "2015-12-22 00:24:03+0000",
+                    "dtstart": "2016-12-28 12:00:00+0000",
+                    "location": "Trento",
+                    "summary": "Maintenace2 Node Trento",
+                    "uid": "4e001d86-a842-11e5-b21e-fa163e9117cc"
+                },
+                {
+                    "description": "Test description Trento Maintenance",
+                    "dtend": "2016-12-25 18:45:00+0100",
+                    "dtstamp": "2015-12-21 09:21:43+0000",
+                    "dtstart": "2016-12-22 11:00:00+0100",
+                    "location": "Trento",
+                    "summary": "Maintenace Node Trento",
+                    "uid": "9d55944c-d34c-4228-bee8-60ceec6f1e57"
+                }
+            ]
+        }
+
++ Response 401 (text/plain)
+
+        UNAUTHORIZED, returned when incorrect token has been provided.
+        
+        + body
+            
+            Could not verify your access level for that URL. You have to login with proper token}
+        
+### Create a New Event [POST]
+This action creates a new Event at the Calendar. As it has been described, there are two types of events:
++ Node maintenance is indicated through the name of the node at the location attribute. The node name should be aligned with the name of the organization where the user has the role of the infrastructure owner.
++ Non-maintenance periods are indicated through the UptimeRequests value at the location attribute. The user has to have the “uptime requester” role.
+
+In order to create a new event, it takes a JSON object containing an event:
++ location (required, string) - The location where the event will be created. On one side, the node name indicate the maintenance period for this infrastructure. On other side, the UptimeRequests value indicates the non-maintenance periods.
++ summary (required, string) - The summary will be the title of the event in order to synthesize the content.
++ description (required, string) - The description explains the details of the events.
++ dtend (required, string) - The data of the end event with the mask yyyy-mm-dd HH:MM:SS+Z
++ dtstart (required, string) - The data of the start event with the mask yyyy-mm-dd HH:MM:SS+Z
+
++ Request (application/json)
+
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
+
+    + body
+            
+            {
+                "location": "Trento",
+                "summary": "Maintenace2 Node Trento",
+                "description": "Test description Trento Maintenance",
+                "dtend": "2016-12-29 20:45:00+0100",
+                "dtstart": "2016-12-29 12:00:00+0100"
+            }
+            
++ Response 201 (application/json)
+    + Body
+
+            {
+
+                "event":{
+                    "description":"Test description Trento Maintenance",
+                    "dtend":"2016-12-29 20:45:00+0100",
+                    "dtstamp":"2015-12-22 00:24:03+0000",
+                    "dtstart":"2016-12-29 12:00:00+0100",
+                    "location":"Trento",
+                    "summary":"Maintenace2 Node Trento",
+                    "uid":"4e001d86-a842-11e5-b21e-fa163e9117cc"
+                }
+
+            }
+
++ Response 401 (text/plain)
+    
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+            
+            Could not verify your access level for that URL. You have to login with proper token
+
++ Response 405 (text/plain)
+    
+    Method not allowed, returned when the user doesn't have rigth access to this resources.
+    
+    + Body
+    
+            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
+
+## Event [/v1/events/{event_uid}]
+### Get Event info [GET]
+
+The users can get the information of event_uid and see the details.
+
++ Parameters
+
+    + event_uid (string) - Id of the event
+
++ Request
+
+    + Headers
+
+            X-Auth-Token: <token provided by FIWARE IdM>
+
++ Response 200 (application/json)
+
+        {
+            "event": {
+                "description": "Test description Spain Maintenance",
+                "dtend": "2016-01-29 20:45:00+0000",
+                "dtstamp": "2015-12-22 22:31:10+0000",
+                "dtstart": "2016-01-29 12:00:00+0000",
+                "location": "Spain2",
+                "summary": "Maintenace2 Node Spain",
+                "uid": "51d615c6-a8f3-11e5-9141-00ff90f60b0b"
+            }
+        }
+
++ Response 401
+
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+        
+            Could not verify your access level for that URL. You have to login with proper token
+            
+### Delete Event [DELETE]
+
+The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods.
+
++ Parameters
+
+    + event_uid (string) - Id of the event
+
++ Request
+
+    + Headers
+
+            X-Auth-Token: <token provided by FIWARE IdM>
+
++ Response 204
+
+
++ Response 404
+    
+    + Body
+            
+            Not Found Event
+
++ Response 401
+
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+
+            Could not verify your access level for that URL. You have to login with proper token
+
++ Response 405
+    
+    Method not allowed, returned when the user doesn't have rigth access to this resources.
+    
+    + Body
+        
+            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
+
+
+
+
