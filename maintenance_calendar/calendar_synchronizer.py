@@ -3,9 +3,10 @@ from datetime import datetime, date
 import pytz
 import caldav
 from caldav.elements import dav, cdav
-from model import CalendarCollection, Calendar, EventCollection, Event
+from model import CalendarCollection, Calendar, EventCollection, Event, Node, NodeCollection
 import uuid
 import dateutil.parser
+import ast
 
 class CalendarSynchronizer():
 
@@ -28,6 +29,17 @@ END:VCALENDAR
 	# Caldav url
 	_url = config.url_calendar
 
+
+	def get_available_nodes(self):
+		listNodes = ast.literal_eval(config.node_list)
+		nodes = []
+		for node in listNodes:
+			print node
+			nodeModel = Node(node['id'],node['name'])
+			print nodeModel
+			nodes.append(nodeModel)
+
+		return NodeCollection(nodes)
 	
 	def get_calendars(self):
 
@@ -47,7 +59,7 @@ END:VCALENDAR
 		calendars = principal.calendars()
 		print "_get_remote_calendars(): len of calendars " , calendars
 		if len(calendars) > 0:
-			print "_get_remote_calendars(): hay calendars!!!"
+			print "_get_remote_calendars(): There are calendars!!!"
 		for calendar in calendars:
 			print "_get_remote_calendars(): A calendar of type: %s" % calendar
 
@@ -105,7 +117,10 @@ END:VCALENDAR
 
 	def get_event(self, eventId):
 		remote_event = self._get_remote_event(eventId)
-		return Event.from_remote_event(remote_event)
+		if remote_event is None:
+			return None
+		else:
+			return Event.from_remote_event(remote_event)
 
 	def _get_remote_events(self):
 		client = caldav.DAVClient(self._url)

@@ -1,7 +1,9 @@
 from maintenance_calendar.parser.json.json_calendar_parser import JSONCalendarParser
+from maintenance_calendar.parser.json.json_node_parser import JSONNodeParser
 from maintenance_calendar.parser.json.json_event_parser import JSONEventParser
 from maintenance_calendar.parser.parser import Parser
 from maintenance_calendar.parser.json.json_calendar_collection_parser import JSONCalendarCollectionParser
+from maintenance_calendar.parser.json.json_node_collection_parser import JSONNodeCollectionParser
 from maintenance_calendar.parser.json.json_event_collection_parser import JSONEventCollectionParser
 from maintenance_calendar.parser.json.json_exception_parser import JSONExceptionParser
 
@@ -17,5 +19,9 @@ class JSONParserFactory():
             return JSONEventCollectionParser()
         elif type_.__name__ in 'MaintenanceCalendarSyncError':
             return JSONExceptionParser()
+        elif type_.__name__ in 'Node':
+            return JSONNodeParser()
+        elif type_.__name__ in 'NodeCollection':
+            return JSONNodeParser()
         else:
             return Parser()

@@ -153,7 +153,16 @@ Running the Maintenance Calendar component using Flask development server is eas
 
 ### Deploying in production mode
 
-As mentioned before, several deployment configurations are possible. In this section we described how we deployed this in a production environment using Debian 8, Nginx, Gunicorn, Supervisor and Virtualenv.
+As mentioned before, several deployment configurations are possible. In this section we described how we deployed this in a production environment using Ubuntu 14, Nginx, Gunicorn, Supervisor and Virtualenv.
+
+It is recommended not to use the root account. You have to create a new account with root privileges. 
+Once you are logged in as root account, we are going to add the new user account which will use to log in in order to install and deploy the component.
+	$ adduser <user_name>
+
+The system will ask you few questions, starting with the account password (introduce a strong password).
+
+Add the new user to the sudo group in order to have administrative tasks. Afterwards, the whole deployment will be executed with this new user account.
+	$ gpasswd -a <user_name> sudo
 
 We suppose that you have performed the installation steps and you have set up a virtual environment for the project.
 
@@ -161,51 +170,81 @@ We also suppose those global variables:
 * $PROJECT_DIR: the directory the Maintenance Calendar component code has been placed.
 * $VIRTUALENV_DIR: the directory where the dedicated virtual environment for the Maintenance Calendar component resides.
 
+
 Most of the scripts have are based on [Michał Karzyński](https://gist.github.com/postrational)
 Gist examples on [how to set up Django on Nginx with Gunicorn and supervisor](https://gist.github.com/postrational/5747293#file-gunicorn_start-bash) and on the
 [Flask documentation](http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/#gunicorn)
 
 The steps are the following:
 
-1. Install the dependences
+1. Install the dependences in the virtual environment.
+		<venv>$ sudo pip install gunicorn
 
-		$ sudo pip install virtualenv
-		$ sudo aptitude install nginx gunicorn supervisor
+2. Prepare the component to be executed by gunicorn. Uncomment the following row in the file maintenance_calendar/__init__.py
 
-2. Create a Gunicorn start script
+		from flask import Flask
+		app = Flask(__name__)
+		#This import allows the gunicorn to see the views
+		#uncomment next row, if you want to use gunicorn application such as production environments.
+		import maintenance_calendar.views
+
+3. Start Maintenance Calendar and validate that the gunicorn is working correctly
+
+		<venv>$ gunicorn -w 4 maintenance_calendar:app
+		[2016-04-26 14:07:59 +0000] [1593] [INFO] Starting gunicorn 19.4.5
+		[2016-04-26 14:07:59 +0000] [1593] [INFO] Listening at: http://127.0.0.1:8000 (1593)
+		[2016-04-26 14:07:59 +0000] [1593] [INFO] Using worker: sync
+		[2016-04-26 14:07:59 +0000] [1598] [INFO] Booting worker with pid: 1598
+		[2016-04-26 14:07:59 +0000] [1599] [INFO] Booting worker with pid: 1599
+		[2016-04-26 14:07:59 +0000] [1600] [INFO] Booting worker with pid: 1600
+		[2016-04-26 14:07:59 +0000] [1601] [INFO] Booting worker with pid: 1601
+
+		You can see that we have created four worker processes to attend the request by Gunicorn. This number should generally be between 2-4 workers per core in the server.
+
+		Test the installation: in another terminal, executing the "Hellow Word" request.
+		$ curl -X GET "http://localhost:8000/api/v1" -H 'X-Auth-Token:<Token_ID>'
+
+		It is important to validate the installation for every step in order to facilitate the identification of the errors.
+
+4. Create a Gunicorn start script
 
 	This script can be placed wherever you want. In our case, we placed it in
 	$PROJECT_DIR/bin/gunicorn_start.
 
 		#!/bin/bash
 
-		NAME="MaintenanceCalendar"           # Name of the application
+		NAME="maintenance_calendar"          # Name of the application
 		PROJECTDIR=$PROJECT_DIR              # Project directory
-		SOCKFILE=$PROJECT_DIR/gunicorn.sock  # we will communicate using this unix socket
 		USER=root                            # the user to run as
 		GROUP=root                           # the group to run as
-		NUM_WORKERS=3                        # how many worker processes should Gunicorn spawn
-		
+		NUM_WORKERS=4                        # how many worker processes should Gunicorn spawn
+
 		# Activate the virtual environment
 		cd $PROJECT_DIR
 		source $VIRTUALENV_DIR/bin/activate
 		export PYTHONPATH=$PROJECT_DIR:$PYTHONPATH
-		
-		# Create the run directory if it doesn't exist
-		RUNDIR=$(dirname $SOCKFILE)
-		test -d $RUNDIR || mkdir -p $RUNDIR
-		
+
 		# Start your Flask Unicorn
 		# Programs meant to be run under supervisor should
 		#   not daemonize themselves (do not use --daemon)
 		exec $VIRTUALENV_DIR/bin/gunicorn ${NAME}:app \
-
 		  --name $NAME \
 		  --workers $NUM_WORKERS \
 		  --user=$USER --group=$GROUP \
-		  --bind=unix:$SOCKFILE \
-		  --log-level=debug \
+		  --log-level=error \
 		  --log-file=-
+
+	Execute the file and validate it.
+		$ ./gunicorn_start
+	
+	Test the installation: in another terminal, executing the "Hellow Word" request.
+		$ curl -X GET "http://localhost:8000/api/v1" -H 'X-Auth-Token:<Token_ID>'
+
+
+
+5. Install the dependences
+		$ sudo aptitude install nginx supervisor
+
 
 3. Create the Supervisor script to start/stop the application:
 
@@ -240,7 +279,7 @@ The steps are the following:
 			access_log $PROJECT_DIR/logs/nginx-access.log;
 			error_log $PROJECT_DIR/logs/nginx-error.log;
 
-			location / {
+			location /maintenance_calendar/ {
 				# an HTTP header important enough to have its own Wikipedia entry:
 				#   http://en.wikipedia.org/wiki/X-Forwarded-For
 				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -264,11 +303,8 @@ The steps are the following:
 				# clients, really.
 				# proxy_buffering off;
 
-				# Try to serve static files from nginx, no point in making an
-				# *application* server like Unicorn/Rainbows! serve static files.
-				if (!-f $request_filename) {
-					proxy_pass http://MaintenanceCalendar_app_server;
-					break;
+				proxy_pass http://localhost:8000/;
+
 				}
 			}
 		}
@@ -279,14 +315,20 @@ The steps are the following:
 
 6. Add the virtual server for the Maintenance Calendar component to the directory of enabled sites and restart Nginx:
 
-		$ sudo ln -s /etc/nginx/sites-available/slagui /etc/nginx/sites-enabled
-		$ sudo systemctl restart nginx.service 
+		$ sudo ln -s /etc/nginx/sites-available/MaintenanceCalendar /etc/nginx/sites-enabled
+		$ sudo service nginx restart
+
+6. Installation verification
+	Execute the "Hellow Word" request.
+		$ curl -X GET "http://<public_ip>:8000/api/v1" -H 'X-Auth-Token:<Token_ID>'
+
+
 
 ## Installation verification
 
 To check that everything was correctly installed, run the project in development mode and perform the following HTTP call:
 
-		$  curl -X GET "http://localhost:8085/api/v1/events" -H 'X-Auth-Token:<Token_ID>'
+		$  curl -X GET "http://localhost/api/v1/events" -H 'X-Auth-Token:<Token_ID>'
 
 
 It should return an empty JSON list.

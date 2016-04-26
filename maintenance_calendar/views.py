@@ -13,6 +13,7 @@ from maintenance_calendar.model import Calendar, Event
 from exceptions import UnAuthorizedMethodError
 
 from maintenance_calendar import config
+import ast
 
 # set the secret key.  keep this really secret:
 #To generate the new secret Key use this:
@@ -61,6 +62,12 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
+def exists_node_calendar(node):
+    listNodes = ast.literal_eval(config.node_list)
+    if any(d.get('id', None) == node for d in listNodes):
+        return True
+    else:
+        return False
 
 def authorization(location):
     ##This method is reponsible to manage the authorization for the different events.
@@ -78,23 +85,27 @@ def authorization(location):
                     break
 
         else:
-            #validate if the user has privileges to manage the events of this node
-            organizations = user['organizations']
-            print organizations
-            
-            for organization in organizations:
-                name = organization['name']
-                position = name.find("FIDASH")
-                if position != -1:
-                    name_organization = name[:position-1]
-                    if name_organization==location:
-                        roles = organization['roles']
-                        for role in roles:
-                            role_name =  role['name']
-                            if role_name=='InfrastructureOwner':
-                                is_authorized = True
-                                break
-                        break
+            #validate if the node is in the list of available node calendars
+            if exists_node_calendar(location):
+                #validate if the user has privileges to manage the events of this node
+                organizations = user['organizations']
+                print organizations
+                
+                for organization in organizations:
+                    name = organization['name']
+                    position = name.find("FIDASH")
+                    if position != -1:
+                        name_organization = name[:position-1]
+                        if name_organization==location:
+                            roles = organization['roles']
+                            for role in roles:
+                                role_name =  role['name']
+                                if role_name=='InfrastructureOwner':
+                                    is_authorized = True
+                                    break
+                            break
+            else:
+                print 'The name of the node is not included in the list of available calendars'
 
     except Exception, e:
             #any error indicate that the structure is not correct and we don't allow to connect for this user.
@@ -164,6 +175,9 @@ def get_event(event_id):
 
     manager = CalendarSynchronizer()
     event = manager.get_event(event_id)
+    if event is None:
+        return Response('Not Found Event', status=404)
+    
     response_body = event.serialize(request.accept_mimetypes)
     return Response(response_body, status=200, mimetype=request.accept_mimetypes[0][0])
 
@@ -182,6 +196,8 @@ def delete_event(event_id):
     #before to remoe it, we need to collect the event to know the location, we don't want to delegate this action to the CalendarSynchronizer
     #if we didn't want to create two calls to the calendar, we will need to translate this validation to the CalendarSynchronizer
     event = manager.get_event(event_id)
+    if event is None:
+        return Response('Not Found Event', status=404)
     #validate the authorization to delete it
     authorization(event.location)
 
@@ -195,3 +211,24 @@ if __name__ == '__main__':
     app.run()
 
 
+@app.route("/api/v1/nodes", methods=['GET'])
+@requires_auth
+def get_nodes():
+    manager = CalendarSynchronizer()
+    node_collection = manager.get_available_nodes()
+    response_body = node_collection.serialize(request.accept_mimetypes)  
+    return Response(response_body, mimetype=request.accept_mimetypes[0][0]) 
+
+
+@app.route("/api/v1/ics/maintenanceCalendarFiwareLab", methods=['GET'])
+def get_ics():
+    ics_url = config.url_calendar + config.ics_calendar
+    response = requests.get(ics_url)
+    if (response.status_code == 200):
+        try:
+            print response.content
+        except Exception, e:
+            print "get_ics(): Error - " + str(e)
+            return Response('Not Found Ics Calendar', status=404)
+            
+    return Response(response.content)

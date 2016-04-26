@@ -183,3 +183,58 @@ class EventCollection(ParseableModel):
             events.append(event_dict)
         
         return {"events" : events}
+
+
+class Node(ParseableModel):
+  
+    id = None
+    name = None
+
+    def __init__(self, id=None, name=None):
+        self.name = name
+        self.id = id
+        
+    def __repr__(self):
+        return '<Node %r>' % self.id
+    
+    @classmethod
+    def deserialize(cls, mimetype, data):
+        calendar_dict = super(Node, cls).deserialize(mimetype, data)
+
+        print "Node-deserialize(): deserialize Node: ", node_dict
+        return Calendar( node_dict.get('name'))
+    
+    @classmethod
+    def serialize(self, mimetype):
+        return ParseableModel.serialize(self, mimetype)
+    
+    def _to_content_dict(self):
+        return {
+                   "id": self.id,
+                   "name" : self.name
+
+               }
+    
+    def to_dict(self):
+        return {"calendar" : self._to_content_dict()}
+    
+
+class NodeCollection(ParseableModel):
+    def __init__(self, nodes):
+        self.nodes = nodes
+    
+   
+    def serialize(self, mimetype):
+        return ParseableModel.serialize(self, mimetype)
+    
+    def extend(self, calendar_collection):
+        self.nodes.extend(node_collection.nodes)
+    
+    def to_dict(self):
+        nodes = []
+        for node in self.nodes:
+            print "NodeCollection-to_dict(): Node", node
+            node_dict = node._to_content_dict()
+            nodes.append(node_dict)
+        
+        return {"nodes" : nodes}
