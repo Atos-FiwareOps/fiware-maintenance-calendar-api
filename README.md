@@ -1,5 +1,7 @@
 # Maintenance calendar API
 
+[![License badge](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+
 The maintenance calendar API provides a simplification for the FIWARE-Ops (Fi-Dash components) in order to interact with standard Caldav servers. This project is part of [FIWARE](http://www.fiware.org/).
 
 
