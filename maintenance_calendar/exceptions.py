@@ -17,6 +17,7 @@ class UnimplementedMethodError(Exception):
 class MaintenanceCalendarError(Exception):
     def __init__(self, message, status_code=None, payload=None):
         print "init Exception !!!!!!!!!!!!!!!!"
+        print message
         Exception.__init__(self)
         self.message = message
         if status_code is not None:

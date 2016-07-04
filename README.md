@@ -44,8 +44,13 @@ In order to cover this two types of events, there are two different kinds of rol
 Note: It is out of reach the definition of the structure of the users/organizations and their roles. Hence, the component will validate the token (included in the header) and the profile of this user, after validating and getting this information from the IdM of FIWARE. 
 
 
-The maintenance calendar component has been developed in conjunction with the Fi-Dash component. So, the component exposes a REST API in order to be integrated with the Fi-Dash components; allowing the infrastructure managers to create events for the maintenance periods and the uptime requesters to create events for the non-maintenance periods.
+The maintenance calendar component has been developed in conjunction with the Fi-Dash component. So, the component exposes a REST API in order to be integrated with the Fi-Dash components; allowing the infrastructure managers to create events for the maintenance periods and the uptime requesters to create events for the non-maintenance periods. Besides, the stakeholders of these events can obtain the complete calendar in format ics in order to be integrated with the other calendars tools such as the Outlook or the Thunderbird. 
 
+Moreover, the component includes a notification system; allowing the consumers receive notifications when a event is created, modified or deleted. The objective of the notification system is not to manage the events through this mechanism, and it focus on warning to the subscribed users of these notifications. This system is based on the existing GEs called Orion Context Broker [Orion Context Broker](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker)
+
+In the following figure the FIWARE Lab components that intervene in the Maintenance Calendar operations are depicted.
+
+![architecture](docs/images/architecture_Maintenance_Calendar.png "Maintenance Calendar Architecture")
 
 ## Features implemented
 
@@ -114,6 +119,10 @@ The Maintenance Calendar component needs minimal configuration, basically the pa
 
 * url_keystone: The url of the FIWARE IdM. It should contain the compleate URL including the parameter of the token, for example https://account.lab.fiware.org/user/?access_token=".
 * url_calendar = The url of the Radicale Calendar, for example "http://xxx.xxx.xxx.xxx:5232/fiware/".
+* ics_calendar = The internal ics of the Radical Calendar, for example "NodesMaintenance.ics".
+* host_contex_broker = The endpoint of the Orion Context broker instance, for example the generic instance of FIWARE Lab as SaaS "http://orion.lab.fiware.org:1026"
+
+
 
 ## Running
 
@@ -504,6 +513,287 @@ The infrastructures can delete the events associated to their node, and the user
             The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
 
 
+# Group Nodes
+Resources related to Nodes in the API.
+## Nodes Collection [/v1/nodes]
+### List Nodes [GET]
+This functionality allows the FIWARE user to get all the nodes covered by this Maintenance Calendar for the FIWARE Lab ecosystem.
++ Request
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
++ Response 200 (application/json)
+         {
+            "nodes": [
+                {
+                    "id": "Berlin2",
+                    "name": "Berlin2"
+                },
+                {
+                    "id": "Budapest2",
+                    "name": "Budapest2"
+                },
+                {
+                    "id": "Crete",
+                    "name": "Crete"
+                },
+                {
+                    "id": "Gent",
+                    "name": "Gent"
+                },
+                {
+                    "id": "Karlskrona2",
+                    "name": "Karlskrona2"
+                },
+                {
+                    "id": "Lannion2",
+                    "name": "Lannion2"
+                },
+                {
+                    "id": "Mexico",
+                    "name": "Mexico"
+                },
+                {
+                    "id": "PiraeusN",
+                    "name": "PiraeusN"
+                },
+                {
+                    "id": "PiraeusU",
+                    "name": "PiraeusU"
+                },
+                {
+                    "id": "Poznan",
+                    "name": "Poznan"
+                },
+                {
+                    "id": "Prague",
+                    "name": "Prague"
+                },
+                {
+                    "id": "SaoPaulo",
+                    "name": "SaoPaulo"
+                },
+                {
+                    "id": "SophiaAntipolis",
+                    "name": "SophiaAntipolis"
+                },
+                {
+                    "id": "Spain2",
+                    "name": "Spain2"
+                },
+                {
+                    "id": "Stockholm2",
+                    "name": "Stockholm2"
+                },
+                {
+                    "id": "Trento",
+                    "name": "Trento"
+                },
+                {
+                    "id": "Volos",
+                    "name": "Volos"
+                },
+                {
+                    "id": "Waterford",
+                    "name": "Waterford"
+                },
+                {
+                    "id": "Zurich",
+                    "name": "Zurich"
+                }
+            ]
+        }
++ Response 401 (text/plain)
+        UNAUTHORIZED, returned when incorrect token has been provided.
+        
+        + body
+            
+            Could not verify your access level for that URL. You have to login with proper token}
+
+# Group iCalendar format
+Resources related to iCalendar (ics) format calendar in the API.
+## Ics file format [/v1/ics]
+### Ics file [GET]
+This functionality allows the FIWARE users to get this Maintenance Calendar events with the ICS format.
++ Response 200 (text/plain)
+        BEGIN:VCALENDAR
+        PRODID:-//Radicale//NONSGML Radicale Server//EN
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
+        DTSTART:20160111T060000Z
+        DTEND:20160112T180000Z
+        DESCRIPTION:Evento de Mantenimiento
+        DTSTAMP:20160108T102928Z
+        LOCATION:Spain2
+        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
+        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
+        END:VEVENT
+        BEGIN:VEVENT
+        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
+        DTSTART:20160317T123500Z
+        DTEND:20160318T183500Z
+        DESCRIPTION:test
+        DTSTAMP:20160308T082603Z
+        LOCATION:Crete
+        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
+        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
+        END:VEVENT
+        END:VCALENDAR
+
+
+##Notifications##
+
+The consumers only need to subscribe in the events that they want to receive the notifications. This documentation covers only main subscriptions for: i) expecific node events ii) all the nodes events iii) UptimeRequest events and iv) all the events of the calendar.
+For all this examples. you need to keep in mind the following notes:
+
+* Note1: First of all, you need an account in FIWARE Lab. With that account you can obtain a valid authentication token (<Valid-Token>) to use in the REST API calls to Orion. To get that token, get and run the "token_script.sh" script. Introduce your FIWARE Lab user and password when the scripts ask for it (more details [here](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)):
+
+	$ wget --no-check-certificate https://raw.githubusercontent.com/fgalan/oauth2-example-orion-client/master/token_script.sh
+	$ bash token_script.sh
+	Username: your_email@example.com
+	Password:
+	Token: <this is the token you need>
+
+* Note2: The subscribers need to have a service to receive the notification, for example in the following examples is http://<host:port>/api/v1/testOrion, therefore, it should be changed by the correct one.
+
+* Note3: The endpoint of the Orion Context broker should be aligned with the instance that has been integrated. So, it is used the common instance of the Orion Context Broker "orion.lab.fiware.org:1026/v1/subscribeContext", but it should be changed by the correct one (see the installation section).
+
+Examples of subscriptions:
+
+* **Subcription for expecific node events**: The consumer only will receive the notifications generated by the Spain2 node.
+
+	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+		{
+		    "entities": [
+		        {
+		            "type": "Node",
+		            "isPattern": "false",
+		            "id": "maintenancecalendar:Spain2"
+		        }
+		    ],
+		    "attributes": [],
+		    "reference": "http://<host:port>/api/v1/testOrion",
+		    "duration": "P1M",
+		    "notifyConditions": [
+		        {
+		            "type": "ONCHANGE",
+		            "condValues": []
+		        }
+		    ]
+		}
+		EOF
+
+* **Subcription for all node events**: The consumer only will receive the notifications generated by all the nodes.
+	
+	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+	{
+	    "entities": [
+	        {
+	            "type": " Node ",
+	            "isPattern": "true",
+	            "id": "maintenancecalendar:.*"
+	        }
+	    ],
+	    "attributes": [],
+	    "reference": "http://<host:port>/api/v1/testOrion",
+	    "duration": "P1M",
+	    "notifyConditions": [
+	        {
+	            "type": "ONCHANGE",
+	            "condValues": []
+	        }
+	    ]
+	}
+	EOF
+
+* **Subcription for the UptimeRequest events**: The consumer only will receive the notifications generated by all the non-maintenance periods (UptimeRequest type).
+
+	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+	{
+	    "entities": [
+	        {
+	            "type": "UptimeRequest",
+	            "isPattern": "false",
+	            "id": "maintenancecalendar:UptimeRequest"
+	        }
+	    ],
+	    "attributes": [],
+	    "reference": "http://<host:port>/api/v1/testOrion",
+	    "duration": "P1M",
+	    "notifyConditions": [
+	        {
+	            "type": "ONCHANGE",
+	            "condValues": []
+	        }
+	    ]
+	}
+	EOF
+
+
+* **Subcription for any change in the calendar**: The consumer will receive all notifications generated by any event of the calendar.
+
+	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+	{
+	    "entities": [
+	        {
+	            "type": " Node ",
+	            "isPattern": "true",
+	            "id": "maintenancecalendar:.*"
+	        }
+	    ],
+	    "attributes": [],
+	    "reference": "http://<host:port>/api/v1/testOrion",
+	    "duration": "P1M",
+	    "notifyConditions": [
+	        {
+	            "type": "ONCHANGE",
+	            "condValues": []
+	        }
+	    ]
+	}
+	EOF
+
+
+The message body that the consumer will receive has the following structure:
+{
+	"subscriptionId":"5742ff59fca84a197cef3db8",
+	"originator":"localhost",
+	"contextResponses":[
+		{
+		"contextElement":{	
+			"type":"UptimeRequest",
+			"isPattern":"false",
+			"id":"maintenancecalendar:UptimeRequest",
+			"attributes":[
+					{
+					"name":"event",
+					"type":"string",
+					"value":"UptimeRequest"
+					},
+					{
+					"name":"type_event",
+					"type":"string",
+					"value":"NEW"
+					},
+					{
+					"name":"uptimerequest_description",
+					"type":"string",
+					"value":"Non-Maintenace period for Nodes"
+					}
+				]
+			},
+		"statusCode":{
+			"code":"200",
+			"reasonPhrase":"OK"
+			}
+		}
+	]
+}
+
+
+
+The notifications system is compleatally flexible, so the subscribers can be warned only for the specific attributes of the nodes and UptimeRequest events, you only need to follow the documentation of the [Orion Context Broker](https://fiware-orion.readthedocs.io/en/develop/index.html).
 
 ##License##
 

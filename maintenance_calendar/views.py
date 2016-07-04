@@ -15,6 +15,8 @@ from exceptions import UnAuthorizedMethodError
 from maintenance_calendar import config
 import ast
 
+from maintenance_calendar.contextbroker.context_broker_notification import ContextBrokerNotificator
+
 # set the secret key.  keep this really secret:
 #To generate the new secret Key use this:
 #>>> import os
@@ -32,6 +34,7 @@ def check_auth(token):
         try:
             user = json.loads(responseToken.content)
             session['user'] = user
+            session['token'] = token
             chech_auth = True
         except Exception, e:
             print "check_auth(): Error - " + str(e)
@@ -113,6 +116,7 @@ def authorization(location):
             print 'Error authorization for location !!!' + location 
             print e
     if not is_authorized:
+        print ("The user is not authorized!!!")
         raise UnAuthorizedMethodError()
         
 
@@ -123,11 +127,18 @@ def not_found(error):
 
 @app.errorhandler(UnAuthorizedMethodError)
 def not_authorized(error):
-    return "The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.", 405
+    return Response('The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.', status=405)
+    #return "The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.", 405
 
 @app.route('/api/v1')
 @requires_auth
 def hello_world():
+    
+    ##example for creating subscriptions of the Calendar.
+    #_contextbroker = ContextBrokerNotificator(session['token'])
+    #_contextbroker.notify_maintenance_event("Spain2",  _contextbroker.NEW_EVENT,  "maintenance_description_definitivo")
+    #_contextbroker.notify_uptimerequests_event( _contextbroker.UPDATED_EVENT,  "UptimeRequests_definitivo")
+
     return 'Hello World! '
   
 
@@ -152,20 +163,27 @@ def create_event():
     body = util.remove_non_usable_characters(
                         util.remove_xml_header(request.data.decode("utf-8")))
     content_type = request.content_type
+
     validator_factory = factory_selector.get_factory(content_type)
     validator = validator_factory.create_event_request_validator()
     validator.validate(body)
 
+
     event = Event.deserialize(content_type, body)
 
     #validate the authorization to create it 
-    print event.location
-    authorization(event.location)
+    print "location: " + event.location
+    #authorization(event.location)
+
 
     manager = CalendarSynchronizer()
     new_event = manager.register_event(event)
     
     response_body = new_event.serialize(request.accept_mimetypes)
+
+    #Notify when a new event is created
+    _contextbroker = ContextBrokerNotificator(session['token'])
+    _contextbroker.notify_event(new_event, _contextbroker.NEW_EVENT)
     
     return Response(response_body, status=201, mimetype=request.accept_mimetypes[0][0])
 
@@ -203,6 +221,10 @@ def delete_event(event_id):
 
     status = manager.remove_event(event_id)
     if status:
+        #Notify when a new event is created
+        _contextbroker = ContextBrokerNotificator(session['token'])
+        _contextbroker.notify_event(event, _contextbroker.DELETED_EVENT)
+
         return Response(status=204)
     else:
         return Response('Not Found Event', status=404)
@@ -226,7 +248,8 @@ def get_ics():
     response = requests.get(ics_url)
     if (response.status_code == 200):
         try:
-            print response.content
+            #print response.content
+            print "Return ICS calendar!!!!"
         except Exception, e:
             print "get_ics(): Error - " + str(e)
             return Response('Not Found Ics Calendar', status=404)

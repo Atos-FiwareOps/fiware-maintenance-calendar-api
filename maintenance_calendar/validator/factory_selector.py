@@ -5,9 +5,7 @@ from maintenance_calendar.validator.concrete_factories.xml_validator_factory imp
 def get_factory(mimetype):
 
     ValidatorFactory.mime = mimetype
-    print "entro factory", mimetype
     if 'application/json' in mimetype:
-    	print "****Sale el JSONValidator"
         concrete_factory = JSONValidatorFactory()
     elif 'application/xml' in mimetype:
         concrete_factory = XMLValidatorFactory()

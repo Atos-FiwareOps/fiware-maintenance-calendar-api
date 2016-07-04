@@ -219,6 +219,144 @@ The infrastructures can delete the events associated to their node, and the user
         
             The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
 
+# Group Nodes
+Resources related to Nodes in the API.
+
+## Nodes Collection [/v1/nodes]
+### List Nodes [GET]
+
+This functionality allows the FIWARE user to get all the nodes covered by this Maintenance Calendar for the FIWARE Lab ecosystem.
+
++ Request
+
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
+
++ Response 200 (application/json)
+
+         {
+            "nodes": [
+                {
+                    "id": "Berlin2",
+                    "name": "Berlin2"
+                },
+                {
+                    "id": "Budapest2",
+                    "name": "Budapest2"
+                },
+                {
+                    "id": "Crete",
+                    "name": "Crete"
+                },
+                {
+                    "id": "Gent",
+                    "name": "Gent"
+                },
+                {
+                    "id": "Karlskrona2",
+                    "name": "Karlskrona2"
+                },
+                {
+                    "id": "Lannion2",
+                    "name": "Lannion2"
+                },
+                {
+                    "id": "Mexico",
+                    "name": "Mexico"
+                },
+                {
+                    "id": "PiraeusN",
+                    "name": "PiraeusN"
+                },
+                {
+                    "id": "PiraeusU",
+                    "name": "PiraeusU"
+                },
+                {
+                    "id": "Poznan",
+                    "name": "Poznan"
+                },
+                {
+                    "id": "Prague",
+                    "name": "Prague"
+                },
+                {
+                    "id": "SaoPaulo",
+                    "name": "SaoPaulo"
+                },
+                {
+                    "id": "SophiaAntipolis",
+                    "name": "SophiaAntipolis"
+                },
+                {
+                    "id": "Spain2",
+                    "name": "Spain2"
+                },
+                {
+                    "id": "Stockholm2",
+                    "name": "Stockholm2"
+                },
+                {
+                    "id": "Trento",
+                    "name": "Trento"
+                },
+                {
+                    "id": "Volos",
+                    "name": "Volos"
+                },
+                {
+                    "id": "Waterford",
+                    "name": "Waterford"
+                },
+                {
+                    "id": "Zurich",
+                    "name": "Zurich"
+                }
+            ]
+        }
 
 
++ Response 401 (text/plain)
 
+        UNAUTHORIZED, returned when incorrect token has been provided.
+        
+        + body
+            
+            Could not verify your access level for that URL. You have to login with proper token}
+
+
+# Group iCalendar format
+Resources related to iCalendar (ics) format calendar in the API.
+
+## Ics file format [/v1/ics]
+### Ics file [GET]
+
+This functionality allows the FIWARE users to get this Maintenance Calendar events with the ICS format.
+
++ Response 200 (text/plain)
+
+        BEGIN:VCALENDAR
+        PRODID:-//Radicale//NONSGML Radicale Server//EN
+        VERSION:2.0
+        BEGIN:VEVENT
+        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
+        DTSTART:20160111T060000Z
+        DTEND:20160112T180000Z
+        DESCRIPTION:Evento de Mantenimiento
+        DTSTAMP:20160108T102928Z
+        LOCATION:Spain2
+        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
+        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
+        END:VEVENT
+        BEGIN:VEVENT
+        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
+        DTSTART:20160317T123500Z
+        DTEND:20160318T183500Z
+        DESCRIPTION:test
+        DTSTAMP:20160308T082603Z
+        LOCATION:Crete
+        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
+        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
+        END:VEVENT
+        END:VCALENDAR
