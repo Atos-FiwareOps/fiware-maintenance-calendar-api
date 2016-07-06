@@ -1,2 +1,5 @@
 url_keystone = "https://account.lab.fiware.org/user/?access_token="
 url_calendar = "http://xxx.xxx.xxx.xxx:5232/fiware/"
+ics_calendar = "NodesMaintenance.ics"
+node_list = "[{'id': 'Berlin2', 'name': 'Berlin2'},{'id': 'Budapest2', 'name': 'Budapest2'},{'id': 'Crete', 'name': 'Crete'},{'id': 'Gent', 'name': 'Gent'},{'id': 'Karlskrona2', 'name': 'Karlskrona2'},{'id': 'Lannion2', 'name': 'Lannion2'},{'id': 'Mexico', 'name': 'Mexico'},{'id': 'PiraeusN', 'name': 'PiraeusN'},{'id': 'PiraeusU', 'name': 'PiraeusU'},{'id': 'Poznan', 'name': 'Poznan'},{'id': 'Prague', 'name': 'Prague'},{'id': 'SaoPaulo', 'name': 'SaoPaulo'},{'id': 'SophiaAntipolis', 'name': 'SophiaAntipolis'},{'id': 'Spain2', 'name': 'Spain2'},{'id': 'Stockholm2', 'name': 'Stockholm2'},{'id': 'Trento', 'name': 'Trento'},{'id': 'Volos', 'name': 'Volos'},{'id': 'Waterford', 'name': 'Waterford'},{'id': 'Zurich', 'name': 'Zurich'}]"
+host_contex_broker = "http://orion.lab.fiware.org:1026"

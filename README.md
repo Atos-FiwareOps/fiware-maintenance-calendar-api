@@ -48,7 +48,7 @@ Note: It is out of reach the definition of the structure of the users/organizati
 
 The maintenance calendar component has been developed in conjunction with the Fi-Dash component. So, the component exposes a REST API in order to be integrated with the Fi-Dash components; allowing the infrastructure managers to create events for the maintenance periods and the uptime requesters to create events for the non-maintenance periods. Besides, the stakeholders of these events can obtain the complete calendar in format ics in order to be integrated with the other calendars tools such as the Outlook or the Thunderbird. 
 
-Moreover, the component includes a notification system; allowing the consumers receive notifications when a event is created, modified or deleted. The objective of the notification system is not to manage the events through this mechanism, and it focus on warning to the subscribed users of these notifications. This system is based on the existing GEs called Orion Context Broker [Orion Context Broker](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker)
+Moreover, the component includes a notification system; allowing the consumers to receive notifications when a event is created, modified or deleted. The objective of the notification system is not to manage the events through this mechanism, and it focus on warning to the subscribed users of these notifications. This system is based on the existing GEs called Orion Context Broker [Orion Context Broker](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker)
 
 In the following figure the FIWARE Lab components that intervene in the Maintenance Calendar operations are depicted.
 
@@ -62,6 +62,8 @@ The requirements list of this version (v1) is the following one:
 * The infrastructures can create a new event associated to their node, and the users with the uptime requester role can create events of non-maintenance periods. 
 * The FIWARE users can get the information of one specific event and see the details.
 * The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods. 
+* The component exposes the maintenance calendar with the iCalendar standard (ics format).
+* The component includes a notification system; allowing the consumers to receive notifications.
 
 ## Installation
 
@@ -124,6 +126,10 @@ The Maintenance Calendar component needs minimal configuration, basically the pa
 * ics_calendar = The internal ics of the Radical Calendar, for example "NodesMaintenance.ics".
 * host_contex_broker = The endpoint of the Orion Context broker instance, for example the generic instance of FIWARE Lab as SaaS "http://orion.lab.fiware.org:1026"
 
+It is necessary to execute the script bin/ConfigurationMaintenanceCalendarForNotifications.sh to inialitate entities for the Maintenance Calendar notification in the Context Broker instance (variable: host_contex_broker, see above bullet list. The following variables should be modified in order to be aligned with the instance of the Context Broker:
+
+* IP_CONTEXT_BROKER = The endpoint of the Orion Context broker instance, for example the generic instance of FIWARE Lab as SaaS "http://orion.lab.fiware.org:1026". It should be aligned with the instance of the Context Broker (config.py).
+* TOKEN_CONTEXT_BROKER =  Token for accessing to the Context Broker. You need an account in FIWARE Lab to obtain this token, see the [documentation of the Context Broker](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)
 
 
 ## Running
@@ -646,16 +652,16 @@ This functionality allows the FIWARE users to get this Maintenance Calendar even
 
 ##Notifications##
 
-The consumers only need to subscribe in the events that they want to receive the notifications. This documentation covers only main subscriptions for: i) expecific node events ii) all the nodes events iii) UptimeRequest events and iv) all the events of the calendar.
+The consumers only need to subscribe in the events that they want to receive the notifications. This section only covers some examples of subscriptions for: i) expecific node events ii) all the nodes events iii) UptimeRequest events and iv) all the events of the calendar.
 For all this examples. you need to keep in mind the following notes:
 
 * Note1: First of all, you need an account in FIWARE Lab. With that account you can obtain a valid authentication token (<Valid-Token>) to use in the REST API calls to Orion. To get that token, get and run the "token_script.sh" script. Introduce your FIWARE Lab user and password when the scripts ask for it (more details [here](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)):
 
-	$ wget --no-check-certificate https://raw.githubusercontent.com/fgalan/oauth2-example-orion-client/master/token_script.sh
-	$ bash token_script.sh
-	Username: your_email@example.com
-	Password:
-	Token: <this is the token you need>
+		$ wget --no-check-certificate https://raw.githubusercontent.com/fgalan/oauth2-example-orion-client/master/token_script.sh
+		$ bash token_script.sh
+		Username: your_email@example.com
+		Password:
+		Token: <this is the token you need>
 
 * Note2: The subscribers need to have a service to receive the notification, for example in the following examples is http://<host:port>/api/v1/testOrion, therefore, it should be changed by the correct one.
 
@@ -665,13 +671,36 @@ Examples of subscriptions:
 
 * **Subcription for expecific node events**: The consumer only will receive the notifications generated by the Spain2 node.
 
-	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+		$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+			{
+			    "entities": [
+			        {
+			            "type": "Node",
+			            "isPattern": "false",
+			            "id": "maintenancecalendar:Spain2"
+			        }
+			    ],
+			    "attributes": [],
+			    "reference": "http://<host:port>/api/v1/testOrion",
+			    "duration": "P1M",
+			    "notifyConditions": [
+			        {
+			            "type": "ONCHANGE",
+			            "condValues": []
+			        }
+			    ]
+			}
+			EOF
+
+* **Subcription for all node events**: The consumer only will receive the notifications generated by all the nodes.
+	
+		$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
 		{
 		    "entities": [
 		        {
-		            "type": "Node",
-		            "isPattern": "false",
-		            "id": "maintenancecalendar:Spain2"
+		            "type": " Node ",
+		            "isPattern": "true",
+		            "id": "maintenancecalendar:.*"
 		        }
 		    ],
 		    "attributes": [],
@@ -686,112 +715,89 @@ Examples of subscriptions:
 		}
 		EOF
 
-* **Subcription for all node events**: The consumer only will receive the notifications generated by all the nodes.
-	
-	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
-	{
-	    "entities": [
-	        {
-	            "type": " Node ",
-	            "isPattern": "true",
-	            "id": "maintenancecalendar:.*"
-	        }
-	    ],
-	    "attributes": [],
-	    "reference": "http://<host:port>/api/v1/testOrion",
-	    "duration": "P1M",
-	    "notifyConditions": [
-	        {
-	            "type": "ONCHANGE",
-	            "condValues": []
-	        }
-	    ]
-	}
-	EOF
-
 * **Subcription for the UptimeRequest events**: The consumer only will receive the notifications generated by all the non-maintenance periods (UptimeRequest type).
 
-	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
-	{
-	    "entities": [
-	        {
-	            "type": "UptimeRequest",
-	            "isPattern": "false",
-	            "id": "maintenancecalendar:UptimeRequest"
-	        }
-	    ],
-	    "attributes": [],
-	    "reference": "http://<host:port>/api/v1/testOrion",
-	    "duration": "P1M",
-	    "notifyConditions": [
-	        {
-	            "type": "ONCHANGE",
-	            "condValues": []
-	        }
-	    ]
-	}
-	EOF
+		$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+		{
+		    "entities": [
+		        {
+		            "type": "UptimeRequest",
+		            "isPattern": "false",
+		            "id": "maintenancecalendar:UptimeRequest"
+		        }
+		    ],
+		    "attributes": [],
+		    "reference": "http://<host:port>/api/v1/testOrion",
+		    "duration": "P1M",
+		    "notifyConditions": [
+		        {
+		            "type": "ONCHANGE",
+		            "condValues": []
+		        }
+		    ]
+		}
+		EOF
 
 
 * **Subcription for any change in the calendar**: The consumer will receive all notifications generated by any event of the calendar.
 
-	$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
-	{
-	    "entities": [
-	        {
-	            "type": " Node ",
-	            "isPattern": "true",
-	            "id": "maintenancecalendar:.*"
-	        }
-	    ],
-	    "attributes": [],
-	    "reference": "http://<host:port>/api/v1/testOrion",
-	    "duration": "P1M",
-	    "notifyConditions": [
-	        {
-	            "type": "ONCHANGE",
-	            "condValues": []
-	        }
-	    ]
-	}
-	EOF
+		$ curl orion.lab.fiware.org:1026/v1/subscribeContext -s -S --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Auth-Token:<Valid-Token>" -d @- <<EOF
+		{
+		    "entities": [
+		        {
+		            "type": " Node ",
+		            "isPattern": "true",
+		            "id": "maintenancecalendar:.*"
+		        }
+		    ],
+		    "attributes": [],
+		    "reference": "http://<host:port>/api/v1/testOrion",
+		    "duration": "P1M",
+		    "notifyConditions": [
+		        {
+		            "type": "ONCHANGE",
+		            "condValues": []
+		        }
+		    ]
+		}
+		EOF
 
 
 The message body that the consumer will receive has the following structure:
-{
-	"subscriptionId":"5742ff59fca84a197cef3db8",
-	"originator":"localhost",
-	"contextResponses":[
 		{
-		"contextElement":{	
-			"type":"UptimeRequest",
-			"isPattern":"false",
-			"id":"maintenancecalendar:UptimeRequest",
-			"attributes":[
-					{
-					"name":"event",
-					"type":"string",
-					"value":"UptimeRequest"
+			"subscriptionId":"5742ff59fca84a197cef3db8",
+			"originator":"localhost",
+			"contextResponses":[
+				{
+				"contextElement":{	
+					"type":"UptimeRequest",
+					"isPattern":"false",
+					"id":"maintenancecalendar:UptimeRequest",
+					"attributes":[
+							{
+							"name":"event",
+							"type":"string",
+							"value":"UptimeRequest"
+							},
+							{
+							"name":"type_event",
+							"type":"string",
+							"value":"NEW"
+							},
+							{
+							"name":"uptimerequest_description",
+							"type":"string",
+							"value":"Non-Maintenace period for Nodes"
+							}
+						]
 					},
-					{
-					"name":"type_event",
-					"type":"string",
-					"value":"NEW"
-					},
-					{
-					"name":"uptimerequest_description",
-					"type":"string",
-					"value":"Non-Maintenace period for Nodes"
+				"statusCode":{
+					"code":"200",
+					"reasonPhrase":"OK"
 					}
-				]
-			},
-		"statusCode":{
-			"code":"200",
-			"reasonPhrase":"OK"
-			}
+				}
+			]
 		}
-	]
-}
 
 
 
