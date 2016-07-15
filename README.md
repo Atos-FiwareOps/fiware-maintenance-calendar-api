@@ -125,11 +125,17 @@ The Maintenance Calendar component needs minimal configuration, basically the pa
 * url_calendar = The url of the Radicale Calendar, for example "http://xxx.xxx.xxx.xxx:5232/fiware/".
 * ics_calendar = The internal ics of the Radical Calendar, for example "NodesMaintenance.ics".
 * host_contex_broker = The endpoint of the Orion Context broker instance, for example the generic instance of FIWARE Lab as SaaS "http://orion.lab.fiware.org:1026"
+* log_file: the relative path, where the log file will be generated, for example "log/simpler_logger.log", the folder should be created previously.
+* maxbytes_log_file: The maxim size of the log file, for example '2000000' bytes
+* backupCount_log_file: number of backups availables for the log file.
+* formatter_log: the format of the messages in the log file and console.
+* log_level: it indicates the level of the logging messages. The possible values are ERROR, WARNING, INFO and DEBUG
 
 It is necessary to execute the script bin/ConfigurationMaintenanceCalendarForNotifications.sh to inialitate entities for the Maintenance Calendar notification in the Context Broker instance (variable: host_contex_broker, see above bullet list. The following variables should be modified in order to be aligned with the instance of the Context Broker:
 
 * IP_CONTEXT_BROKER = The endpoint of the Orion Context broker instance, for example the generic instance of FIWARE Lab as SaaS "http://orion.lab.fiware.org:1026". It should be aligned with the instance of the Context Broker (config.py).
 * TOKEN_CONTEXT_BROKER =  Token for accessing to the Context Broker. You need an account in FIWARE Lab to obtain this token, see the [documentation of the Context Broker](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)
+
 
 
 ## Running
@@ -197,13 +203,18 @@ The steps are the following:
 1. Install the dependences in the virtual environment.
 		<venv>$ sudo pip install gunicorn
 
-2. Prepare the component to be executed by gunicorn. Uncomment the following row in the file maintenance_calendar/__init__.py
+2. Prepare the component to be executed by gunicorn. 
+
+:* Uncomment the following row in the file maintenance_calendar/__init__.py
 
 		from flask import Flask
 		app = Flask(__name__)
 		#This import allows the gunicorn to see the views
 		#uncomment next row, if you want to use gunicorn application such as production environments.
 		import maintenance_calendar.views
+
+:* Update the runserver.py file to change the debug attribute to False ("app.run(host='0.0.0.0', port=8085, debug=False)"). Morover, you need to modify the attribute "log_level" in the confi.py file to ERROR or WARNING. They only need to be changed if we need to investigate or analyze strange behaviour in the production server.
+
 
 3. Start Maintenance Calendar and validate that the gunicorn is working correctly
 

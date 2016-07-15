@@ -17,6 +17,10 @@ import ast
 
 from maintenance_calendar.contextbroker.context_broker_notification import ContextBrokerNotificator
 
+import logging
+
+log = logging.getLogger(__name__)
+
 # set the secret key.  keep this really secret:
 #To generate the new secret Key use this:
 #>>> import os
@@ -37,7 +41,7 @@ def check_auth(token):
             session['token'] = token
             chech_auth = True
         except Exception, e:
-            print "check_auth(): Error - " + str(e)
+            log.error("check_auth(): Error - " + str(e))
             chech_auth = False
     else:
         chech_auth = False
@@ -52,7 +56,7 @@ def authenticate():
 
 def authorization():
     """Sends a 401 response that enables Auth2 authentication"""
-    print "authorization!!!!!!"
+    log.info("authorization(): creation of message 405")
     return Response(
     'The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.\n', 405 )
 
@@ -92,8 +96,9 @@ def authorization(location):
             if exists_node_calendar(location):
                 #validate if the user has privileges to manage the events of this node
                 organizations = user['organizations']
-                print organizations
-                
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug ("authorization(): organizations - " + str(organizations))
+
                 for organization in organizations:
                     name = organization['name']
                     position = name.find("FIDASH")
@@ -108,15 +113,15 @@ def authorization(location):
                                     break
                             break
             else:
-                print 'The name of the node is not included in the list of available calendars'
+                log.info('authorization(): The name of the node is not included in the list of available calendars')
 
     except Exception, e:
             #any error indicate that the structure is not correct and we don't allow to connect for this user.
             is_authorized = False
-            print 'Error authorization for location !!!' + location 
-            print e
+            log.error("authorization(): Error for location " + str(location) +" exception - " + str(e))
+    
     if not is_authorized:
-        print ("The user is not authorized!!!")
+        log.warning("authorization(): The user is not authorized for the location" + str(location))
         raise UnAuthorizedMethodError()
         
 
@@ -150,8 +155,8 @@ def get_events():
     start_date = request.args.get('start')
     end_date = request.args.get('end')
     
-    
-    print "args", location, start_date, end_date
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug ("get_events(): args - " + str(location) + str(start_date) + str(end_date))
     calendarSynchronizer = CalendarSynchronizer()
     calendar_collection = calendarSynchronizer.get_events(location, start_date, end_date)
     response_body = calendar_collection.serialize(request.accept_mimetypes)  
@@ -172,9 +177,9 @@ def create_event():
     event = Event.deserialize(content_type, body)
 
     #validate the authorization to create it 
-    print "location: " + event.location
-    #authorization(event.location)
-
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug ("create_event(): location - " + str(event.location))
+    authorization(event.location)
 
     manager = CalendarSynchronizer()
     new_event = manager.register_event(event)
@@ -248,10 +253,11 @@ def get_ics():
     response = requests.get(ics_url)
     if (response.status_code == 200):
         try:
-            #print response.content
-            print "Return ICS calendar!!!!"
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug ("get_ics(): ICS content - " + str(response.content))
+            log.info("get_ics(): Return ICS calendar!!!!")
         except Exception, e:
-            print "get_ics(): Error - " + str(e)
+            log.error("get_ics(): Error - " + str(e))
             return Response('Not Found Ics Calendar', status=404)
             
     return Response(response.content)

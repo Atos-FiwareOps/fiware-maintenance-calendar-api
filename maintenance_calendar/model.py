@@ -1,6 +1,9 @@
 from maintenance_calendar.parser.parser_factory import ParserFactory
 import re
 from caldav.elements import dav, cdav
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ParseableModel(object):
@@ -33,7 +36,8 @@ class Calendar(ParseableModel):
     def deserialize(cls, mimetype, data):
         calendar_dict = super(Calendar, cls).deserialize(mimetype, data)
 
-        print "Calendar-deserialize(): deserialize Calendar: ", calendar_dict
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("Calendar-deserialize(): deserialize Calendar: " + str(calendar_dict))
         return Calendar( calendar_dict.get('name'))
     
     @classmethod
@@ -62,7 +66,8 @@ class CalendarCollection(ParseableModel):
     @classmethod
     def from_remote_calendar(cls, remote_calendar_list):
         calendars = []
-        print "CalendarCollection-from_remote_calendar(): remote_calendar_list", remote_calendar_list
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("CalendarCollection-from_remote_calendar(): remote_calendar_list" + str(remote_calendar_list))
         for remote_calendar in remote_calendar_list:
             calendars.append(Calendar.from_remote_calendar(remote_calendar))
             
@@ -77,7 +82,9 @@ class CalendarCollection(ParseableModel):
     def to_dict(self):
         calendars = []
         for calendar in self.calendars:
-            print "CalendarCollection-to_dict(): CALENDAR", calendar
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug ("CalendarCollection-to_dict(): CALENDAR" + str(calendar))
+
             calendar_dict = calendar._to_content_dict()
             calendars.append(calendar_dict)
         
@@ -110,8 +117,6 @@ class Event(ParseableModel):
     def deserialize(cls, mimetype, data):
         event_dict = super(Event, cls).deserialize(mimetype, data)
 
-        #print "deserialize Event: ", event_dict
-        
         return (Event(dtstart = event_dict.get('dtstart'),
             dtend = event_dict.get('dtend'),
             summary = event_dict.get('summary'),
@@ -138,7 +143,6 @@ class Event(ParseableModel):
         return ParseableModel.serialize(self, mimetype)
     
     def _to_content_dict(self):
-        #print "_to_content_dict"
         return {
                    "uid": self.uid,
                    "dtstamp" : self.dtstamp,
@@ -150,7 +154,6 @@ class Event(ParseableModel):
                }
     
     def to_dict(self):
-        #print "to_dict Event"
         return {"event" : self._to_content_dict()}
     
 
@@ -162,7 +165,6 @@ class EventCollection(ParseableModel):
     @classmethod
     def from_remote_event(cls, remote_event_list):
         events = []
-        #print "remote_event_list", remote_event_list
         for remote_event in remote_event_list:
             events.append(Event.from_remote_event(remote_event))
             
@@ -175,12 +177,15 @@ class EventCollection(ParseableModel):
         self.events.extend(event_collection.events)
     
     def to_dict(self):
-        #print "to_dict Collection Event" , self.events
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("EventCollection-to_dict(): to_dict Collection Event - " + str(self.events))
         events = []
         for event in self.events:
-            print "EventCollection-to_dict(): Event", event
             event_dict = event._to_content_dict()
             events.append(event_dict)
+
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("EventCollection-to_dict(): Events - " + str(events))
         
         return {"events" : events}
 
@@ -200,8 +205,8 @@ class Node(ParseableModel):
     @classmethod
     def deserialize(cls, mimetype, data):
         calendar_dict = super(Node, cls).deserialize(mimetype, data)
-
-        print "Node-deserialize(): deserialize Node: ", node_dict
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("Node-deserialize(): deserialize Node: " + str(node_dict))
         return Calendar( node_dict.get('name'))
     
     @classmethod
@@ -233,8 +238,9 @@ class NodeCollection(ParseableModel):
     def to_dict(self):
         nodes = []
         for node in self.nodes:
-            print "NodeCollection-to_dict(): Node", node
             node_dict = node._to_content_dict()
             nodes.append(node_dict)
         
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("NodeCollection-to_dict(): Node - " + str(nodes))
         return {"nodes" : nodes}

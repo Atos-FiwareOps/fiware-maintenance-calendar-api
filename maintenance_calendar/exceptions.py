@@ -2,7 +2,9 @@ from maintenance_calendar import app
 from flask import request
 from flask import Response
 from maintenance_calendar.parser.parser_factory import ParserFactory
+import logging
 
+log = logging.getLogger(__name__)
 
 class UnAuthorizedMethodError(Exception):
     status_code = 405
@@ -16,8 +18,9 @@ class UnimplementedMethodError(Exception):
 
 class MaintenanceCalendarError(Exception):
     def __init__(self, message, status_code=None, payload=None):
-        print "init Exception !!!!!!!!!!!!!!!!"
-        print message
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug ("MaintenanceCalendarError.__init__(): init Exception !!!!!!!!!!!!!!!!" + str(message))
+
         Exception.__init__(self)
         self.message = message
         if status_code is not None:
@@ -65,9 +68,12 @@ def handle_invalid_usage(error):
     mimetype = request.accept_mimetypes
     
     parser_factory = ParserFactory()
-    print "valor mimetype!!!!", mimetype
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug ("handle_invalid_usage(): valor mimetype!!!!" + str(mimetype))
+
     parser = parser_factory.get_parser(mimetype, MaintenanceCalendarError)
-    print "inicializado parser!!!!"
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug ("handle_invalid_usage(): inicializated parser!!!!")
     
     response_body = parser.from_model(error)
     

@@ -8,3 +8,4 @@ varios
 config.py
 *~
 *.pyc
+log/**

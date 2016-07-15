@@ -7,9 +7,11 @@ from model import CalendarCollection, Calendar, EventCollection, Event, Node, No
 import uuid
 import dateutil.parser
 import ast
+import logging
+
+log = logging.getLogger(__name__)
 
 class CalendarSynchronizer():
-
 
 	_vcal = """BEGIN:VCALENDAR
 VERSION:2.0
@@ -34,11 +36,11 @@ END:VCALENDAR
 		listNodes = ast.literal_eval(config.node_list)
 		nodes = []
 		for node in listNodes:
-			print node
 			nodeModel = Node(node['id'],node['name'])
-			print nodeModel
 			nodes.append(nodeModel)
 
+		if log.isEnabledFor(logging.DEBUG):
+				log.debug ("get_available_nodes(): nodes - " + str(nodes))
 		return NodeCollection(nodes)
 	
 	def get_calendars(self):
@@ -53,15 +55,17 @@ END:VCALENDAR
 
 	def _get_remote_calendars(self):
 		client = caldav.DAVClient(self._url)
-		print "_get_remote_calendars(): Created client"
+		log.debug("_get_remote_calendars(): Created client")
 		principal = client.principal()
-		print "_get_remote_calendars(): Created principal"
+		log.debug("_get_remote_calendars(): Created principal")
 		calendars = principal.calendars()
-		print "_get_remote_calendars(): len of calendars " , calendars
+		if log.isEnabledFor(logging.DEBUG):
+			log.debug ("_get_remote_calendars(): len of calendars " + str(calendars))
 		if len(calendars) > 0:
-			print "_get_remote_calendars(): There are calendars!!!"
+			log.debug ("_get_remote_calendars(): There are calendars!!!")
 		for calendar in calendars:
-			print "_get_remote_calendars(): A calendar of type: %s" % calendar
+			if log.isEnabledFor(logging.DEBUG):
+				log.debug(str ("_get_remote_calendars(): A calendar of type: %s" % calendar))
 
 		return calendars
 
@@ -107,7 +111,8 @@ END:VCALENDAR
 
 	def get_events(self, node = None, start_date = None, end_date = None):
 
-		print node
+		if log.isEnabledFor(logging.DEBUG):
+			log.debug("get_events(): node str - " + str(node))
 		remote_event_collection = self._get_remote_events()
 		if (node is not None) or (start_date is not None) or (end_date is not None):
 			#apply the filter to the collection
@@ -164,7 +169,8 @@ END:VCALENDAR
 			DTEND = input_end.strftime("%Y%m%dT%H%M%SZ%z") 
 
 			vcal_parsed = self._vcal.format(UID,DTSTAMP,DTSTART,DTEND,SUMMARY,DESCRIPTION,LOCATION)
-			print vcal_parsed
+			if log.isEnabledFor(logging.DEBUG):
+				log.debug("_register_remote_event(): vcal_parsed - " + str(vcal_parsed))
 
 			new_event = calendar.add_event(vcal_parsed)
 			return new_event
@@ -175,28 +181,23 @@ END:VCALENDAR
 		return Event.from_remote_event(remote_event)
 
 	def _remove_remote_event(self, eventId, remote_event):
+		log.debug ("_remove_remote_event(): START")
 		if remote_event is not None:
 			remote_event.load()
 			vobj = remote_event.instance
-			print vobj.vevent.uid.value
+			if log.isEnabledFor(logging.DEBUG):
+					log.debug("_remove_remote_event(): Event with uid: "+ str(vobj.vevent.uid.value))
 			if (eventId == vobj.vevent.uid.value):
-				print ("////////////_remove_remote_event(): START/////////")
-				print ("////////////Deleting event")
-				print ("////////////eventRadicale summary")
-				print vobj.vevent.summary.value
-				print ("////////////eventRadicale dtstar")
-				print vobj.vevent.dtstart.value
-				print ("////////////eventRadicale dtstar")
-				print vobj.vevent.dtend.value
-				print ("////////////eventRadicale description")
-				print vobj.vevent.description.value
-				print ("////////////eventRadicale uuid")
-				print vobj.vevent.uid.value
-				print ("////////////eventRadicale LOCATION")
-				print vobj.vevent.location.value
+				if log.isEnabledFor(logging.DEBUG):
+					log.debug("_remove_remote_event(): Deleting event")
+					log.debug("_remove_remote_event(): eventRadicale summary: " + str(vobj.vevent.summary.value))
+					log.debug("_remove_remote_event(): eventRadicale dtstar: " + str(vobj.vevent.dtstart.value) )
+					log.debug("_remove_remote_event(): eventRadicale dtend: " + str(vobj.vevent.dtend.value)) 
+					log.debug("_remove_remote_event(): eventRadicale description: " + str(vobj.vevent.description.value))
+					log.debug("_remove_remote_event(): eventRadicale uuid" + str(vobj.vevent.uid.value))
+					log.debug("_remove_remote_event(): eventRadicale LOCATION" + str(vobj.vevent.location.value))
 				remote_event.delete()
-				print ("////////////deleted event")
-				print ("////////////_remove_remote_event(). END/////////")
+				log.debug("_remove_remote_event(): deleted event")
 				return True
 			else:
 				return False

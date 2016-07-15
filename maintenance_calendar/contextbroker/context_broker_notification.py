@@ -2,6 +2,10 @@
 import requests
 from maintenance_calendar import config
 ##from flask import json
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class ContextBrokerNotificator():
 
@@ -66,21 +70,28 @@ class ContextBrokerNotificator():
 		## to be sure that all the registered people will realize of this notification. TO be completed
 
 		try:
-			print (payload)
+			if log.isEnabledFor(logging.DEBUG):
+				log.debug("_connect_to_context_broker(): Payload --> " + str(payload))
 			response = requests.post(url, headers= self._header, json=payload)
 
 			if (response.status_code == 200):
 
 				if (response.text.find('orionError')!=-1):
-					print ("POST --> " + self._host_contex_broker + self._update_url)
-					print ("Error status: " + response.text)
+					log.warning("_connect_to_context_broker(): POST --> " + self._host_contex_broker + self._update_url)
+					log.warning("_connect_to_context_broker(): Error status: " + response.text)
+					log.warning("_connect_to_context_broker(): PLEASE review the error Status in order to fix the problems, since the subscriber might not be receiving the notifications!!!!")
+					
 				else:
-					print ("OK POST --> " + self._host_contex_broker + self._update_url)
+					if log.isEnabledFor(logging.DEBUG):
+						log.debug("_connect_to_context_broker(): OK POST --> " + self._host_contex_broker + self._update_url)
 			else:
-				print ("POST --> " + self._host_contex_broker + self._update_url)
-				print ("Error status: " + response.text)
+				log.warning("_connect_to_context_broker(): POST --> " + self._host_contex_broker + self._update_url)
+				log.warning("_connect_to_context_broker(): Error status: " + response.text)
+				log.warning("_connect_to_context_broker(): PLEASE review the error Status in order to fix the problems, since the subscriber might not be receiving the notifications!!!!")
+				
 
 		except Exception, e:
-			## we control the error, and we will do necessary actions, for the moment only print the error to follow up.
-			print ("Exception: ")
-			print (e)
+			## we control the error, and we will do necessary actions, for the moment only logging the error to follow up.
+			log.warning("_connect_to_context_broker(): ERROR when connecting with the context broker - " + str(e))
+			log.warning("_connect_to_context_broker(): PLEASE review the error in order to fix the problems, since the subscriber are not receiving the notifications!!!!")
+
