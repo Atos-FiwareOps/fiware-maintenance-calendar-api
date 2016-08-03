@@ -814,6 +814,213 @@ The message body that the consumer will receive has the following structure:
 
 The notifications system is compleatally flexible, so the subscribers can be warned only for the specific attributes of the nodes and UptimeRequest events, you only need to follow the documentation of the [Orion Context Broker](https://fiware-orion.readthedocs.io/en/develop/index.html).
 
+
+## Maintenance Notification system
+
+The [Orion Context Broker GE](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker) has been selected as a component to notify the events of the maintenance calendar. The configuration of the Maintenance Calendar component is integrated by default with the public instance of the FIWARE ecosystem, nevertheless, this common instance only authenticates users of the ecosystem and does not introduce any kind of authorization to manage the resources. Hence, in order to introduce our authorization to publish the notifications (only the users with the correct permissions have to be able to publish these notifications), a proprietary instance of the Context Broker GE has to be installed. Coming up next, it is explained how to create and configure the Context Broker and the [PeP proxy Wilwa](http://catalogue.fiware.org/enablers/pep-proxy-wilma) for our own instance. It is not the intention to deep into the installation of the GEs, since they are well described in their documentation.
+
+### Installation steps
+
+* Install the Orion Context Broker GE. There are four ways to install the component as it is indicated [here](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker/creating-instances). You can find more details about the installation and the user manual [here](https://fiware-orion.readthedocs.io/en/develop/)
+
+* Install the PeP proxy Wilma GE. As we need to install the Pep Proxy in the same instance that we have installed the Orion Context Broker (see the above step). We are going to install the PeP proxy manually; following the installation [guide](http://fiware-pep-proxy.readthedocs.io/en/latest/admin_guide/). Nevertheless, there are other ways to install the component as it is indicated [here](http://catalogue.fiware.org/enablers/pep-proxy-wilma/creating-instances). 
+
+* Create a new application in the FIWARELab IdM portal for our Context Broker GE and associate a PeP proxy, you can see the details [here](http://fiware-idm.readthedocs.io/en/v4.4.0/user_guide/). 
+
+As we have commented, it is not the intention to detail here all the steps, since it is well described in the documentation, nevertheless, the different attributes of the PeP Proxy configuration are detailed in order to understand the correlation between them. 
+Hence, we are going to configure the PeP Proxy Wilma GE to authenticate and authorize the users of the FIWARE ecosystem, since without the PeP Proxy our orion instance is completely accessible for all the users.
+
+#### Configure the Authentication.
+Modify the config.js file with these attributes values:
+
+		var config = {};
+
+		config.pep_port = 1026;
+
+		// Set this var to undefined if you don't want the server to listen on HTTPS
+		config.https = {
+		    enabled: false,
+		    cert_file: 'cert/cert.crt',
+		    key_file: 'cert/key.key',
+		    port: 443
+		};
+
+		config.account_host = 'https://account.lab.fiware.org';
+
+		config.keystone_host = 'cloud.lab.fiware.org';
+		config.keystone_port = 4731;
+
+		config.app_host = '192.168.1.251';
+		config.app_port = '10026';
+		// Use true if the app server listens in https
+		config.app_ssl = false;
+
+		// Credentials obtained when registering PEP Proxy in Account Portal
+		config.username = 'pep_proxy_8fe51be1cbbb4f8c9893a842800a05e2';
+		config.password = 'xxxxxxxxxxxxxxxxxxxxxxxxx';
+
+		// options: oauth2/keystone
+		config.tokens_engine = 'oauth2';
+
+The explanation of the different attributes:
+
+* config.pep_port
+We want to maintain the 1026 as a main port for notifying calendars events, although you can decide what are the best ports to expose the notifications service. 
+In our case, we need to:
+** update the configuration file of the Context Broker (/etc/sysconfig/contextBroker) and modify the variable BROKER_PORT to the appropriated port, more details [here](https://fiware-orion.readthedocs.io/en/develop/admin/running/index.html)
+** update the port parameter of the PeP Proxy configuration file (fiware-pep-proxy/config.js): config.pep_port = 1026;
+
+
+* config.account_host
+if you want to use the option “oauth2” for the tokens_engine parameter, you will need to introduce the instance of the KeyRock GE, in our case, we are using the FIWARE Lab instance 'https://account.lab.fiware.org'
+
+
+* config.keystone_host
+if you want to use the option “keystone” for the tokens_engine parameter, you will need to introduce the instance of the OpenStack KeyStone (cloud.lab.fiware.org' port 4731).
+
+
+* config.username and config. password
+We need to introduce the same user and password (PEP Proxy) created for the application, see next figure.
+
+![Notification Config](docs/images/NotificationConfig.png "Notification config IdM")
+
+
+After configuring the Orion Context Broker GE and the PeP Proxy GE, we need to test the installation for the authentication:
+
+		$ curl <instace_Orion_contextBroker>:1026/v1/contextEntities/maintenancecalendar:UptimeRequest -X GET
+		Auth-token not found in request header
+
+We need to introduce the correct token in the header, test with an incorrect token:
+
+		$ curl 212.128.217.106:1026/v1/contextEntities/maintenancecalendar:UptimeRequest -X GET --header "X-Auth-Token:dummyTokencurl"
+		User token not authorized
+
+
+Now, we can generate the token associated to our application (or a valid token for the FIWARELab ecosystem) as follow:
+
+		curl --user <ClientID>:<ClientSecret> -X POST -H "Content-Type: application/x-www-form-urlencoded" https://account.lab.fiware.org/oauth2/token -d 'grant_type=password&username=<User_Name_FIWARE>&password=<password_User_FIWARE>'
+
+		{
+		    "access_token": "sl3Z12oozWR6wDMAySAai9J1wL7A76",
+		    "expires_in": 3600,
+		    "refresh_token": "z5GrthR6hTmL7NE76mMqt9fIfbeRkc",
+		    "token_type": "Bearer"
+		}
+
+NOTE: where the ClientID and ClientSecret are provided in the FIWARE Lab IdM, see the above image (Auth2 Credentials).
+
+Now, we need to include this token in the header request
+
+		$ curl 212.128.217.106:1026/v1/contextEntities/maintenancecalendar:UptimeRequest -X GET --header "X-Auth-Token:sl3Z12oozWR6wDMAySAai9J1wL7A76"
+		{
+		  "contextElement" : {
+		    "type" : "UptimeRequest",
+		    "isPattern" : "false",
+		    "id" : "maintenancecalendar:UptimeRequest",
+		    "attributes" : [
+		      {
+		        "name" : "event",
+		        "type" : "string",
+		        "value" : "UptimeRequest"
+		      },
+		      {
+		        "name" : "type_event",
+		        "type" : "string",
+		        "value" : "New"
+		      },
+		      {
+		        "name" : "uptimerequest_description",
+		        "type" : "string",
+		        "value" : "Initial notification"
+		      }
+		    ]
+		  },
+		  "statusCode" : {
+		    "code" : "200",
+		    "reasonPhrase" : "OK"
+		  }
+		}
+
+#### Configure the Authorization:
+
+Configure the PeP proxy Wilma to authorize only some users to execute some  actions. 
+
+		// if enabled PEP checks permissions with AuthZForce GE.
+		// only compatible with oauth2 tokens engine
+		//
+		// you can use custom policy checks by including programatic scripts
+		// in policies folder. An script template is included there
+		config.azf = {
+		        enabled: true,
+		    host: 'auth.lab.fiware.org',
+		    port: 6019,
+		    custom_policy: undefined // use undefined to default policy checks (HTTP verb + path).
+		};
+
+The explanation of the different attributes:
+
+* config.azf: change the enabled attribute to true.
+
+* Configure the permissions; introducing the actions that you want to protect, for example the creation of calendar events, in our case, we are using a POST action for the resource v1/updateContext.
+
+![Notification Permissions](docs/images/NotificationsPermisions.png "Notification permissions")
+
+
+* Create the new role to assign this permission.
+
+![Roles per Permissions](docs/images/Roles_permissions.png "Roles per permissions")
+
+* Assign this role to the FIWARE users who have to notify the calendar events, in our case the Maintenance Calendar account. Therefore, only the tokens associated to this FIWARE account, which contains this role, will be able to create new events for the Maintenance Calendar.
+
+* After activating the authorization, we need to define the permissions and roles for all the resources and actions. For example, now the GET of the v1/contextEntities/maintenancecalendar:UptimeRequest is not allowed, since it is not created a permission and role to manage it.
+
+		curl 212.128.217.106:1026/v1/contextEntities/maintenancecalendar:UptimeRequest -X GET --header "X-Auth-Token:sl3Z12oozWR6wDMAySAai9J1wL7A76"
+		User token not authorized
+
+
+
+#### Configuration Public access
+
+Nevertheless, we can also allow all the users to access to a public part of the component, modifying the configuration file and add the public URLs. For example to access to the UptimeRequest and NodeMaintenace.
+
+		// list of paths that will not check authentication/authorization
+		// example: ['/public/*', '/static/css/']
+		config.public_paths = ['/v1/contextEntities/maintenancecalendar:*'];
+
+Now, we can execute again the request without the token, the response will be allowed.
+
+		$ curl 212.128.217.106:1026/v1/contextEntities/maintenancecalendar:UptimeRequest -X GET
+		{
+		  "contextElement" : {
+		    "type" : "UptimeRequest",
+		    "isPattern" : "false",
+		    "id" : "maintenancecalendar:UptimeRequest",
+		    "attributes" : [
+		      {
+		        "name" : "event",
+		        "type" : "string",
+		        "value" : "UptimeRequest"
+		      },
+		      {
+		        "name" : "type_event",
+		        "type" : "string",
+		        "value" : "New"
+		      },
+		      {
+		        "name" : "uptimerequest_description",
+		        "type" : "string",
+		        "value" : "Initial notification"
+		      }
+		    ]
+		  },
+		  "statusCode" : {
+		    "code" : "200",
+		    "reasonPhrase" : "OK"
+		  }
+		}
+
+
+
 ##License##
 
 Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
