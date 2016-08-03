@@ -18,6 +18,11 @@ The maintenance calendar API provides a simplification for the FIWARE-Ops (Fi-Da
 	* [Running in development mode](#running-in-development-mode)
 	* [Deploying in production mode](#deploying-in-production-mode)
 * [API specification](#api-specification)
+* [Maintenance Notification system](#Maintenance Notification system)
+	* [Installation steps](##Installation steps)
+	* [Configure the Authentication](##Configure-the-Authentication.)
+	* [Configure the Authentication](##Configure-the-Authorization)
+	* [Configuration Public access](##Configuration-Public-access)
 * [License](#license)
 
 
@@ -634,31 +639,32 @@ Resources related to iCalendar (ics) format calendar in the API.
 ## Ics file format [/v1/ics]
 ### Ics file [GET]
 This functionality allows the FIWARE users to get this Maintenance Calendar events with the ICS format.
-+ Response 200 (text/plain)
-        BEGIN:VCALENDAR
-        PRODID:-//Radicale//NONSGML Radicale Server//EN
-        VERSION:2.0
-        BEGIN:VEVENT
-        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
-        DTSTART:20160111T060000Z
-        DTEND:20160112T180000Z
-        DESCRIPTION:Evento de Mantenimiento
-        DTSTAMP:20160108T102928Z
-        LOCATION:Spain2
-        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
-        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
-        END:VEVENT
-        BEGIN:VEVENT
-        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
-        DTSTART:20160317T123500Z
-        DTEND:20160318T183500Z
-        DESCRIPTION:test
-        DTSTAMP:20160308T082603Z
-        LOCATION:Crete
-        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
-        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
-        END:VEVENT
-        END:VCALENDAR
+
+		+ Response 200 (text/plain)
+		        BEGIN:VCALENDAR
+		        PRODID:-//Radicale//NONSGML Radicale Server//EN
+		        VERSION:2.0
+		        BEGIN:VEVENT
+		        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
+		        DTSTART:20160111T060000Z
+		        DTEND:20160112T180000Z
+		        DESCRIPTION:Evento de Mantenimiento
+		        DTSTAMP:20160108T102928Z
+		        LOCATION:Spain2
+		        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
+		        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
+		        END:VEVENT
+		        BEGIN:VEVENT
+		        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
+		        DTSTART:20160317T123500Z
+		        DTEND:20160318T183500Z
+		        DESCRIPTION:test
+		        DTSTAMP:20160308T082603Z
+		        LOCATION:Crete
+		        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
+		        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
+		        END:VEVENT
+		        END:VCALENDAR
 
 
 ##Notifications##
@@ -830,7 +836,7 @@ The [Orion Context Broker GE](http://catalogue.fiware.org/enablers/publishsubscr
 As we have commented, it is not the intention to detail here all the steps, since it is well described in the documentation, nevertheless, the different attributes of the PeP Proxy configuration are detailed in order to understand the correlation between them. 
 Hence, we are going to configure the PeP Proxy Wilma GE to authenticate and authorize the users of the FIWARE ecosystem, since without the PeP Proxy our orion instance is completely accessible for all the users.
 
-#### Configure the Authentication.
+### Configure the Authentication.
 Modify the config.js file with these attributes values:
 
 		var config = {};
@@ -867,8 +873,10 @@ The explanation of the different attributes:
 * config.pep_port
 We want to maintain the 1026 as a main port for notifying calendars events, although you can decide what are the best ports to expose the notifications service. 
 In our case, we need to:
-** update the configuration file of the Context Broker (/etc/sysconfig/contextBroker) and modify the variable BROKER_PORT to the appropriated port, more details [here](https://fiware-orion.readthedocs.io/en/develop/admin/running/index.html)
-** update the port parameter of the PeP Proxy configuration file (fiware-pep-proxy/config.js): config.pep_port = 1026;
+
+:* update the configuration file of the Context Broker (/etc/sysconfig/contextBroker) and modify the variable BROKER_PORT to the appropriated port, more details [here](https://fiware-orion.readthedocs.io/en/develop/admin/running/index.html)
+
+:* update the port parameter of the PeP Proxy configuration file (fiware-pep-proxy/config.js): config.pep_port = 1026;
 
 
 * config.account_host
@@ -941,7 +949,7 @@ Now, we need to include this token in the header request
 		  }
 		}
 
-#### Configure the Authorization:
+### Configure the Authorization
 
 Configure the PeP proxy Wilma to authorize only some users to execute some  actions. 
 
@@ -979,7 +987,7 @@ The explanation of the different attributes:
 
 
 
-#### Configuration Public access
+### Configuration Public access
 
 Nevertheless, we can also allow all the users to access to a public part of the component, modifying the configuration file and add the public URLs. For example to access to the UptimeRequest and NodeMaintenace.
 
@@ -1008,7 +1016,7 @@ Now, we can execute again the request without the token, the response will be al
 		      },
 		      {
 		        "name" : "uptimerequest_description",
-		        "type" : "string",
+		        "type" : "string",n
 		        "value" : "Initial notification"
 		      }
 		    ]
