@@ -138,12 +138,17 @@ def not_authorized(error):
 @app.route('/api/v1')
 @requires_auth
 def hello_world():
+    ##example for creating subscriptions of the Calendar with the token of the user.
+    #_contextbroker = ContextBrokerNotificator(token = session['token'])
+    ## OR
+    ##example for creating subscriptions of the Calendar with the token of the PeP Proxy
+    #_contextbroker = ContextBrokerNotificator()
     
-    ##example for creating subscriptions of the Calendar.
-    #_contextbroker = ContextBrokerNotificator(session['token'])
-    #_contextbroker.notify_maintenance_event("Spain2",  _contextbroker.NEW_EVENT,  "maintenance_description_definitivo")
-    #_contextbroker.notify_uptimerequests_event( _contextbroker.UPDATED_EVENT,  "UptimeRequests_definitivo")
-
+    ##COMMON PART FOR THE EXAMPLE
+    #event = Event(dtstart="", dtend="", summary="Summary Test Spain2", description= "description Test Spain2", location= "Spain2")
+    #_contextbroker.notify_event(event, _contextbroker.NEW_EVENT)
+    #event = Event(dtstart="", dtend="", summary="Summary Test UptimeRequests", description= "description Test UptimeRequests", location= "UptimeRequests")
+    #_contextbroker.notify_event(event, _contextbroker.UPDATED_EVENT)
     return 'Hello World! '
   
 
@@ -187,7 +192,7 @@ def create_event():
     response_body = new_event.serialize(request.accept_mimetypes)
 
     #Notify when a new event is created
-    _contextbroker = ContextBrokerNotificator(session['token'])
+    _contextbroker = ContextBrokerNotificator()
     _contextbroker.notify_event(new_event, _contextbroker.NEW_EVENT)
     
     return Response(response_body, status=201, mimetype=request.accept_mimetypes[0][0])
@@ -205,7 +210,8 @@ def get_event(event_id):
     return Response(response_body, status=200, mimetype=request.accept_mimetypes[0][0])
 
 
-#To be confirmed if the radicalle accept modify a calendar event
+# Radicalle server calendar doesn't accept modify a calendar event!!!. Hence, We need to remove and create the new one.
+# For the moment, we have decided to delegate these actions to the FIDASH. Therefore they will remove and create the new one, when they want to modify an event.
 @app.route("/api/v1/events/<event_id>", methods=['PUT'])
 @requires_auth
 def modify_event(event_id):
@@ -227,7 +233,7 @@ def delete_event(event_id):
     status = manager.remove_event(event_id)
     if status:
         #Notify when a new event is created
-        _contextbroker = ContextBrokerNotificator(session['token'])
+        _contextbroker = ContextBrokerNotificator()
         _contextbroker.notify_event(event, _contextbroker.DELETED_EVENT)
 
         return Response(status=204)
