@@ -401,7 +401,9 @@ Without the node attribute:
     + headers
     
             X-Auth-Token: <token provided by FIWARE IdM>
+
 + Response 200 (application/json)
+
         {
             "events": [
                 {
@@ -424,7 +426,9 @@ Without the node attribute:
                 }
             ]
         }
+
 + Response 401 (text/plain)
+
         UNAUTHORIZED, returned when incorrect token has been provided.
         
         + body
@@ -457,6 +461,7 @@ In order to create a new event, it takes a JSON object containing an event:
             
 + Response 201 (application/json)
     + Body
+
             {
                 "event":{
                     "description":"Test description Trento Maintenance",
@@ -468,12 +473,15 @@ In order to create a new event, it takes a JSON object containing an event:
                     "uid":"4e001d86-a842-11e5-b21e-fa163e9117cc"
                 }
             }
+
 + Response 401 (text/plain)
     
     UNAUTHORIZED, returned when incorrect token has been provided. 
+
     + Body
             
             Could not verify your access level for that URL. You have to login with proper token
+
 + Response 405 (text/plain)
     
     Method not allowed, returned when the user doesn't have rigth access to this resources.
@@ -484,6 +492,7 @@ In order to create a new event, it takes a JSON object containing an event:
 
 ## Event [/v1/events/{event_uid}]
 ### Get Event info [GET]
+
 The users can get the information of event_uid and see the details.
 + Parameters
     + event_uid (string) - Id of the event
@@ -503,7 +512,9 @@ The users can get the information of event_uid and see the details.
             }
         }
 + Response 401
+
     UNAUTHORIZED, returned when incorrect token has been provided. 
+
     + Body
         
             Could not verify your access level for that URL. You have to login with proper token
@@ -522,9 +533,12 @@ The infrastructures can delete the events associated to their node, and the user
             
             Not Found Event
 + Response 401
+
     UNAUTHORIZED, returned when incorrect token has been provided. 
+
     + Body
             Could not verify your access level for that URL. You have to login with proper token
+            
 + Response 405
     
     Method not allowed, returned when the user doesn't have rigth access to this resources.
