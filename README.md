@@ -17,12 +17,20 @@ The maintenance calendar API provides a simplification for the FIWARE-Ops (Fi-Da
 * [Running](#running)
 	* [Running in development mode](#running-in-development-mode)
 	* [Deploying in production mode](#deploying-in-production-mode)
+* [Maintenance Notification system](#Maintenance-Notification-system)
+	* [Installation steps](#Installation-steps)
+	* [Configure the Context Broker Instance](#Configure-the-Context-Broker-Instance)
+	* [Configure the Authentication](#Configure-the-Authentication.)
+	* [Configure the Authorization](#Configure-the-Authorization)
+	* [Configuration Public access](#Configuration-Public-access)
+	* [Installation verification of the Context Broker instance](#Installation-verification-of-the-Context-Broker-instance)
+	* [Configuration of Maintenance Calendar component](#Configuration-of-Maintenance-Calendar-component)
+	* [Installation verification of the Maintenance Calendar component](#Installation-verification-of-the-Maintenance-Calendar-component)
+	* [Subscriptions](#Subscriptions)
 * [API specification](#api-specification)
-* [Maintenance Notification system](#Maintenance Notification system)
-	* [Installation steps](##Installation steps)
-	* [Configure the Authentication](##Configure-the-Authentication.)
-	* [Configure the Authentication](##Configure-the-Authorization)
-	* [Configuration Public access](##Configuration-Public-access)
+	* [Group Events](#Group-Events)
+	* [Group Nodes](#Group-Nodes)
+	* [Group iCalendar format](#Group-iCalendar-format)
 * [License](#license)
 
 
@@ -369,318 +377,6 @@ As it has been commented, the IdM is responsible of i) managing the correct role
 * The authenticated users without the correct roles can search and see the details of the events, but they cannot create and delete events.
 * The authenticated users with the appropriated roles can manage their events.
 
-## API specification
-
-Note: there is an [Apiary version](http://docs.fiwaremaintenancecalendar.apiary.io) of this page with a more readable and structured format, as well as a mock server to perform some tests at.
-
-# Group Events
-Resources related to Events in the API.
-
-## Events Collection [/v1/events?location={location}&start={start}&end={end}]
-### List Events [GET]
-
-This functionality allows the FIWARE user to get all the events, including both maintenance events per node and the non-maintenance periods. All the parameters are optional, hence, if the user doesn’t introduce any parameter, they will see all the events. When some parameters are introduced, the result will contain only the events that compliant them. 
-The parameters are optionals:
-+ location: the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value. 
-+ Start: the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
-+ End: the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
-
-For example, with the node attribute:
-+ Location: Trento. It returns all the events for the Trento node
-+ Location: UptimeRequests. It returns all the events for the non-maintenance periods.
-+ Location: Trento + start: 2016-01-01. It returns all the events for the Trento node from 2016-01-01. (The same for the casuistic *Node:UptimeRequests)
-+ Location: Trento + start: 2016-01-01 + end: 2018-01-01. It returns all the events for the Trento node between the period [2016-01-01 // 2018-01-01](The same for the casuistic Node:UptimeRequests)
-Without the node attribute:
-+ Start: 2016-01-01. It returns all the events (both types) from the 2016-01-01.
-+ Start: 2016-01-01 + end: 2018-01-01. It returns all the events (both types) between the period [2016-01-01 // 2018-01-01]
-+ Parameters
-    + location (optional, number) - the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value.
-    + start (optional, string) - the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
-    + end (optional, string) - the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
-+ Request
-    + headers
-    
-            X-Auth-Token: <token provided by FIWARE IdM>
-
-+ Response 200 (application/json)
-
-        {
-            "events": [
-                {
-                    "description": "Test description Trento Maintenance",
-                    "dtend": "2016-12-28 20:45:00+0000",
-                    "dtstamp": "2015-12-22 00:24:03+0000",
-                    "dtstart": "2016-12-28 12:00:00+0000",
-                    "location": "Trento",
-                    "summary": "Maintenace2 Node Trento",
-                    "uid": "4e001d86-a842-11e5-b21e-fa163e9117cc"
-                },
-                {
-                    "description": "Test description Trento Maintenance",
-                    "dtend": "2016-12-25 18:45:00+0100",
-                    "dtstamp": "2015-12-21 09:21:43+0000",
-                    "dtstart": "2016-12-22 11:00:00+0100",
-                    "location": "Trento",
-                    "summary": "Maintenace Node Trento",
-                    "uid": "9d55944c-d34c-4228-bee8-60ceec6f1e57"
-                }
-            ]
-        }
-
-+ Response 401 (text/plain)
-
-        UNAUTHORIZED, returned when incorrect token has been provided.
-        
-        + body
-            
-            Could not verify your access level for that URL. You have to login with proper token}
-        
-### Create a New Event [POST]
-This action creates a new Event at the Calendar. As it has been described, there are two types of events:
-+ Node maintenance is indicated through the name of the node at the location attribute. The node name should be aligned with the name of the organization where the user has the role of the infrastructure owner.
-+ Non-maintenance periods are indicated through the UptimeRequests value at the location attribute. The user has to have the “uptime requester” role.
-In order to create a new event, it takes a JSON object containing an event:
-+ location (required, string) - The location where the event will be created. On one side, the node name indicate the maintenance period for this infrastructure. On other side, the UptimeRequests value indicates the non-maintenance periods.
-+ summary (required, string) - The summary will be the title of the event in order to synthesize the content.
-+ description (required, string) - The description explains the details of the events.
-+ dtend (required, string) - The data of the end event with the mask yyyy-mm-dd HH:MM:SS+Z
-+ dtstart (required, string) - The data of the start event with the mask yyyy-mm-dd HH:MM:SS+Z
-+ Request (application/json)
-    + headers
-    
-            X-Auth-Token: <token provided by FIWARE IdM>
-    + body
-            
-            {
-                "location": "Trento",
-                "summary": "Maintenace2 Node Trento",
-                "description": "Test description Trento Maintenance",
-                "dtend": "2016-12-29 20:45:00+0100",
-                "dtstart": "2016-12-29 12:00:00+0100"
-            }
-            
-+ Response 201 (application/json)
-    + Body
-
-            {
-                "event":{
-                    "description":"Test description Trento Maintenance",
-                    "dtend":"2016-12-29 20:45:00+0100",
-                    "dtstamp":"2015-12-22 00:24:03+0000",
-                    "dtstart":"2016-12-29 12:00:00+0100",
-                    "location":"Trento",
-                    "summary":"Maintenace2 Node Trento",
-                    "uid":"4e001d86-a842-11e5-b21e-fa163e9117cc"
-                }
-            }
-
-+ Response 401 (text/plain)
-    
-    UNAUTHORIZED, returned when incorrect token has been provided. 
-
-    + Body
-            
-            Could not verify your access level for that URL. You have to login with proper token
-
-+ Response 405 (text/plain)
-    
-    Method not allowed, returned when the user doesn't have rigth access to this resources.
-    
-    + Body
-    
-            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
-
-## Event [/v1/events/{event_uid}]
-### Get Event info [GET]
-
-The users can get the information of event_uid and see the details.
-+ Parameters
-    + event_uid (string) - Id of the event
-+ Request
-    + Headers
-            X-Auth-Token: <token provided by FIWARE IdM>
-+ Response 200 (application/json)
-        {
-            "event": {
-                "description": "Test description Spain Maintenance",
-                "dtend": "2016-01-29 20:45:00+0000",
-                "dtstamp": "2015-12-22 22:31:10+0000",
-                "dtstart": "2016-01-29 12:00:00+0000",
-                "location": "Spain2",
-                "summary": "Maintenace2 Node Spain",
-                "uid": "51d615c6-a8f3-11e5-9141-00ff90f60b0b"
-            }
-        }
-+ Response 401
-
-    UNAUTHORIZED, returned when incorrect token has been provided. 
-
-    + Body
-        
-            Could not verify your access level for that URL. You have to login with proper token
-            
-### Delete Event [DELETE]
-The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods.
-+ Parameters
-    + event_uid (string) - Id of the event
-+ Request
-    + Headers
-            X-Auth-Token: <token provided by FIWARE IdM>
-+ Response 204
-+ Response 404
-    
-    + Body
-            
-            Not Found Event
-+ Response 401
-
-    UNAUTHORIZED, returned when incorrect token has been provided. 
-
-    + Body
-            Could not verify your access level for that URL. You have to login with proper token
-            
-+ Response 405
-    
-    Method not allowed, returned when the user doesn't have rigth access to this resources.
-    
-    + Body
-        
-            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
-
-
-# Group Nodes
-Resources related to Nodes in the API.
-## Nodes Collection [/v1/nodes]
-### List Nodes [GET]
-This functionality allows the FIWARE user to get all the nodes covered by this Maintenance Calendar for the FIWARE Lab ecosystem.
-+ Request
-    + headers
-    
-            X-Auth-Token: <token provided by FIWARE IdM>
-+ Response 200 (application/json)
-
-         {
-            "nodes": [
-                {
-                    "id": "Berlin2",
-                    "name": "Berlin2"
-                },
-                {
-                    "id": "Budapest2",
-                    "name": "Budapest2"
-                },
-                {
-                    "id": "Crete",
-                    "name": "Crete"
-                },
-                {
-                    "id": "Gent",
-                    "name": "Gent"
-                },
-                {
-                    "id": "Karlskrona2",
-                    "name": "Karlskrona2"
-                },
-                {
-                    "id": "Lannion2",
-                    "name": "Lannion2"
-                },
-                {
-                    "id": "Mexico",
-                    "name": "Mexico"
-                },
-                {
-                    "id": "PiraeusN",
-                    "name": "PiraeusN"
-                },
-                {
-                    "id": "PiraeusU",
-                    "name": "PiraeusU"
-                },
-                {
-                    "id": "Poznan",
-                    "name": "Poznan"
-                },
-                {
-                    "id": "Prague",
-                    "name": "Prague"
-                },
-                {
-                    "id": "SaoPaulo",
-                    "name": "SaoPaulo"
-                },
-                {
-                    "id": "SophiaAntipolis",
-                    "name": "SophiaAntipolis"
-                },
-                {
-                    "id": "Spain2",
-                    "name": "Spain2"
-                },
-                {
-                    "id": "Stockholm2",
-                    "name": "Stockholm2"
-                },
-                {
-                    "id": "Trento",
-                    "name": "Trento"
-                },
-                {
-                    "id": "Volos",
-                    "name": "Volos"
-                },
-                {
-                    "id": "Waterford",
-                    "name": "Waterford"
-                },
-                {
-                    "id": "Zurich",
-                    "name": "Zurich"
-                }
-            ]
-        }
-
-+ Response 401 (text/plain)
-
-        UNAUTHORIZED, returned when incorrect token has been provided.
-        
-        + body
-            
-            Could not verify your access level for that URL. You have to login with proper token}
-
-# Group iCalendar format
-Resources related to iCalendar (ics) format calendar in the API.
-## Ics file format [/v1/ics]
-### Ics file [GET]
-This functionality allows the FIWARE users to get this Maintenance Calendar events with the ICS format.
-
-		+ Response 200 (text/plain)
-		        BEGIN:VCALENDAR
-		        PRODID:-//Radicale//NONSGML Radicale Server//EN
-		        VERSION:2.0
-		        BEGIN:VEVENT
-		        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
-		        DTSTART:20160111T060000Z
-		        DTEND:20160112T180000Z
-		        DESCRIPTION:Evento de Mantenimiento
-		        DTSTAMP:20160108T102928Z
-		        LOCATION:Spain2
-		        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
-		        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
-		        END:VEVENT
-		        BEGIN:VEVENT
-		        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
-		        DTSTART:20160317T123500Z
-		        DTEND:20160318T183500Z
-		        DESCRIPTION:test
-		        DTSTAMP:20160308T082603Z
-		        LOCATION:Crete
-		        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
-		        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
-		        END:VEVENT
-		        END:VCALENDAR
-
-
 
 ## Maintenance Notification system
 
@@ -900,6 +596,49 @@ Now, we can execute again the request without the token, the response will be al
 
 The subscription is also allowed since it is configured as a public, for the subscription examples see section "Notifications".
 
+### Installation verification of the Context Broker instance
+
+To check that everything was correctly installed, perform the following HTTP call, for example for the Lannion node:
+
+		$  curl -X GET "http://orion.lab.fiware.org:1026/v1/contextEntities/maintenancecalendar:Lannion2" -H 'X-Auth-Token:<Token_ID>'
+
+
+It should return the initial notification.
+
+	{
+	  "contextElement" : {
+	    "type" : "Node",
+	    "isPattern" : "false",
+	    "id" : "maintenancecalendar:Lannion2",
+	    "attributes" : [
+	      {
+	        "name" : "event",
+	        "type" : "string",
+	        "value" : "Maintenance"
+	      },
+	      {
+	        "name" : "location",
+	        "type" : "string",
+	        "value" : "France"
+	      },
+	      {
+	        "name" : "maintenance_description",
+	        "type" : "string",
+	        "value" : "Initial notification"
+	      },
+	      {
+	        "name" : "type_event",
+	        "type" : "string",
+	        "value" : "New"
+	      }
+	    ]
+	  },
+	  "statusCode" : {
+	    "code" : "200",
+	    "reasonPhrase" : "OK"
+	  }
+	}
+
 
 ### Configuration of Maintenance Calendar component
 
@@ -914,6 +653,45 @@ It is necessary to configure the Maintenance Calender to publish the events in o
 * user_context_broker = FIWARE account with the appropriate role and permission for the Context Broker application, which has been configured at the IdM platform (See the section "Configure the Authorization").
 * pwd_user_context_broker = user password of the previous account.
 * timeout_context_broker = It indicates the time-out of the Context Broker communication in seconds.
+
+
+### Installation verification of the Maintenance Calendar component
+
+To check that everything was correctly installed; create a new event for the UptimeRequest and perform the following HTTP call to see the new status (where the "<HoST_Context_Broker>" is the endpoint of the own Orion Context Broker instance):
+
+		$  curl -X GET "http://<HoST_Context_Broker>:1026/v1/contextEntities/maintenancecalendar:UptimeRequest" -H 'X-Auth-Token:<Token_ID>'
+
+
+It should return the initial notification.
+
+	{
+	  "contextElement" : {
+	    "type" : "UptimeRequest",
+	    "isPattern" : "false",
+	    "id" : "maintenancecalendar:UptimeRequest",
+	    "attributes" : [
+	      {
+	        "name" : "event",
+	        "type" : "string",
+	        "value" : "UptimeRequest"
+	      },
+	      {
+	        "name" : "type_event",
+	        "type" : "string",
+	        "value" : "NEW"
+	      },
+	      {
+	        "name" : "uptimerequest_description",
+	        "type" : "string",
+	        "value" : "Summary Test UptimeRequests"
+	      }
+	    ]
+	  },
+	  "statusCode" : {
+	    "code" : "200",
+	    "reasonPhrase" : "OK"
+	  }
+	}
 
 
 ### Subscriptions
@@ -1069,6 +847,319 @@ The message body that the consumer will receive has the following structure:
 
 
 The notifications system is completely flexible, so the subscribers can be warned only for the specific attributes of the nodes and UptimeRequest events, you only need to follow the documentation of the [Orion Context Broker](https://fiware-orion.readthedocs.io/en/develop/index.html).
+
+
+## API specification
+
+Note: there is an [Apiary version](http://docs.fiwaremaintenancecalendar.apiary.io) of this page with a more readable and structured format, as well as a mock server to perform some tests at.
+
+### Group Events
+Resources related to Events in the API.
+
+#### Events Collection [/v1/events?location={location}&start={start}&end={end}]
+##### List Events [GET]
+
+This functionality allows the FIWARE user to get all the events, including both maintenance events per node and the non-maintenance periods. All the parameters are optional, hence, if the user doesn’t introduce any parameter, they will see all the events. When some parameters are introduced, the result will contain only the events that compliant them. 
+The parameters are optionals:
++ location: the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value. 
++ Start: the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
++ End: the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
+
+For example, with the node attribute:
++ Location: Trento. It returns all the events for the Trento node
++ Location: UptimeRequests. It returns all the events for the non-maintenance periods.
++ Location: Trento + start: 2016-01-01. It returns all the events for the Trento node from 2016-01-01. (The same for the casuistic *Node:UptimeRequests)
++ Location: Trento + start: 2016-01-01 + end: 2018-01-01. It returns all the events for the Trento node between the period [2016-01-01 // 2018-01-01](The same for the casuistic Node:UptimeRequests)
+Without the node attribute:
++ Start: 2016-01-01. It returns all the events (both types) from the 2016-01-01.
++ Start: 2016-01-01 + end: 2018-01-01. It returns all the events (both types) between the period [2016-01-01 // 2018-01-01]
++ Parameters
+    + location (optional, number) - the result only contains the events of this location. This indicate the location of the events, so, if the user introduces one node name, he only will see the events for this node. For the non-maintenance periods, the user has to introduce the UptimeRequests value.
+    + start (optional, string) - the result only contains the events that start on this date with the mask yyyy-mm-dd HH:MM:SS+Z.
+    + end (optional, string) - the result only contains the events that end on this date with with the mask yyyy-mm-dd HH:MM:SS+Z
++ Request
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
+
++ Response 200 (application/json)
+
+        {
+            "events": [
+                {
+                    "description": "Test description Trento Maintenance",
+                    "dtend": "2016-12-28 20:45:00+0000",
+                    "dtstamp": "2015-12-22 00:24:03+0000",
+                    "dtstart": "2016-12-28 12:00:00+0000",
+                    "location": "Trento",
+                    "summary": "Maintenace2 Node Trento",
+                    "uid": "4e001d86-a842-11e5-b21e-fa163e9117cc"
+                },
+                {
+                    "description": "Test description Trento Maintenance",
+                    "dtend": "2016-12-25 18:45:00+0100",
+                    "dtstamp": "2015-12-21 09:21:43+0000",
+                    "dtstart": "2016-12-22 11:00:00+0100",
+                    "location": "Trento",
+                    "summary": "Maintenace Node Trento",
+                    "uid": "9d55944c-d34c-4228-bee8-60ceec6f1e57"
+                }
+            ]
+        }
+
++ Response 401 (text/plain)
+
+        UNAUTHORIZED, returned when incorrect token has been provided.
+        
+        + body
+            
+            Could not verify your access level for that URL. You have to login with proper token}
+        
+##### Create a New Event [POST]
+This action creates a new Event at the Calendar. As it has been described, there are two types of events:
++ Node maintenance is indicated through the name of the node at the location attribute. The node name should be aligned with the name of the organization where the user has the role of the infrastructure owner.
++ Non-maintenance periods are indicated through the UptimeRequests value at the location attribute. The user has to have the “uptime requester” role.
+In order to create a new event, it takes a JSON object containing an event:
++ location (required, string) - The location where the event will be created. On one side, the node name indicate the maintenance period for this infrastructure. On other side, the UptimeRequests value indicates the non-maintenance periods.
++ summary (required, string) - The summary will be the title of the event in order to synthesize the content.
++ description (required, string) - The description explains the details of the events.
++ dtend (required, string) - The data of the end event with the mask yyyy-mm-dd HH:MM:SS+Z
++ dtstart (required, string) - The data of the start event with the mask yyyy-mm-dd HH:MM:SS+Z
++ Request (application/json)
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
+    + body
+            
+            {
+                "location": "Trento",
+                "summary": "Maintenace2 Node Trento",
+                "description": "Test description Trento Maintenance",
+                "dtend": "2016-12-29 20:45:00+0100",
+                "dtstart": "2016-12-29 12:00:00+0100"
+            }
+            
++ Response 201 (application/json)
+    + Body
+
+            {
+                "event":{
+                    "description":"Test description Trento Maintenance",
+                    "dtend":"2016-12-29 20:45:00+0100",
+                    "dtstamp":"2015-12-22 00:24:03+0000",
+                    "dtstart":"2016-12-29 12:00:00+0100",
+                    "location":"Trento",
+                    "summary":"Maintenace2 Node Trento",
+                    "uid":"4e001d86-a842-11e5-b21e-fa163e9117cc"
+                }
+            }
+
++ Response 401 (text/plain)
+    
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+            
+            Could not verify your access level for that URL. You have to login with proper token
+
++ Response 405 (text/plain)
+    
+    Method not allowed, returned when the user doesn't have rigth access to this resources.
+    
+    + Body
+    
+            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
+
+#### Event [/v1/events/{event_uid}]
+##### Get Event info [GET]
+
+The users can get the information of event_uid and see the details.
++ Parameters
+    + event_uid (string) - Id of the event
++ Request
+    + Headers
+            X-Auth-Token: <token provided by FIWARE IdM>
++ Response 200 (application/json)
+
+        {
+            "event": {
+                "description": "Test description Spain Maintenance",
+                "dtend": "2016-01-29 20:45:00+0000",
+                "dtstamp": "2015-12-22 22:31:10+0000",
+                "dtstart": "2016-01-29 12:00:00+0000",
+                "location": "Spain2",
+                "summary": "Maintenace2 Node Spain",
+                "uid": "51d615c6-a8f3-11e5-9141-00ff90f60b0b"
+            }
+        }
++ Response 401
+
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+        
+            Could not verify your access level for that URL. You have to login with proper token
+            
+##### Delete Event [DELETE]
+The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods.
++ Parameters
+    + event_uid (string) - Id of the event
++ Request
+    + Headers
+            X-Auth-Token: <token provided by FIWARE IdM>
++ Response 204
++ Response 404
+    
+    + Body
+            
+            Not Found Event
++ Response 401
+
+    UNAUTHORIZED, returned when incorrect token has been provided. 
+
+    + Body
+            Could not verify your access level for that URL. You have to login with proper token
+            
++ Response 405
+    
+    Method not allowed, returned when the user doesn't have rigth access to this resources.
+    
+    + Body
+        
+            The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.
+
+
+### Group Nodes
+Resources related to Nodes in the API.
+#### Nodes Collection [/v1/nodes]
+##### List Nodes [GET]
+This functionality allows the FIWARE user to get all the nodes covered by this Maintenance Calendar for the FIWARE Lab ecosystem.
++ Request
+    + headers
+    
+            X-Auth-Token: <token provided by FIWARE IdM>
++ Response 200 (application/json)
+
+         {
+            "nodes": [
+                {
+                    "id": "Berlin2",
+                    "name": "Berlin2"
+                },
+                {
+                    "id": "Budapest2",
+                    "name": "Budapest2"
+                },
+                {
+                    "id": "Crete",
+                    "name": "Crete"
+                },
+                {
+                    "id": "Gent",
+                    "name": "Gent"
+                },
+                {
+                    "id": "Karlskrona2",
+                    "name": "Karlskrona2"
+                },
+                {
+                    "id": "Lannion2",
+                    "name": "Lannion2"
+                },
+                {
+                    "id": "Mexico",
+                    "name": "Mexico"
+                },
+                {
+                    "id": "PiraeusN",
+                    "name": "PiraeusN"
+                },
+                {
+                    "id": "PiraeusU",
+                    "name": "PiraeusU"
+                },
+                {
+                    "id": "Poznan",
+                    "name": "Poznan"
+                },
+                {
+                    "id": "Prague",
+                    "name": "Prague"
+                },
+                {
+                    "id": "SaoPaulo",
+                    "name": "SaoPaulo"
+                },
+                {
+                    "id": "SophiaAntipolis",
+                    "name": "SophiaAntipolis"
+                },
+                {
+                    "id": "Spain2",
+                    "name": "Spain2"
+                },
+                {
+                    "id": "Stockholm2",
+                    "name": "Stockholm2"
+                },
+                {
+                    "id": "Trento",
+                    "name": "Trento"
+                },
+                {
+                    "id": "Volos",
+                    "name": "Volos"
+                },
+                {
+                    "id": "Waterford",
+                    "name": "Waterford"
+                },
+                {
+                    "id": "Zurich",
+                    "name": "Zurich"
+                }
+            ]
+        }
+
++ Response 401 (text/plain)
+
+        UNAUTHORIZED, returned when incorrect token has been provided.
+        
+        + body
+            
+            Could not verify your access level for that URL. You have to login with proper token}
+
+### Group iCalendar format
+Resources related to iCalendar (ics) format calendar in the API.
+#### Ics file format [/v1/ics]
+##### Ics file [GET]
+This functionality allows the FIWARE users to get this Maintenance Calendar events with the ICS format.
+
+		+ Response 200 (text/plain)
+		        BEGIN:VCALENDAR
+		        PRODID:-//Radicale//NONSGML Radicale Server//EN
+		        VERSION:2.0
+		        BEGIN:VEVENT
+		        UID:b27c8fac-b5f2-11e5-b605-fa163e9117cc
+		        DTSTART:20160111T060000Z
+		        DTEND:20160112T180000Z
+		        DESCRIPTION:Evento de Mantenimiento
+		        DTSTAMP:20160108T102928Z
+		        LOCATION:Spain2
+		        SUMMARY:Evento de Mantenimiento\nStart: 2016-01-11 06:00\nEnd: 2016-01-12 18:00
+		        X-RADICALE-NAME:b27c8fac-b5f2-11e5-b605-fa163e9117cc.ics
+		        END:VEVENT
+		        BEGIN:VEVENT
+		        UID:65b81e36-e507-11e5-bad1-fa163e9117cc
+		        DTSTART:20160317T123500Z
+		        DTEND:20160318T183500Z
+		        DESCRIPTION:test
+		        DTSTAMP:20160308T082603Z
+		        LOCATION:Crete
+		        SUMMARY:test\nStart: 2016-03-17 12:35 UTC\nEnd: 2016-03-18 18:35 UTC
+		        X-RADICALE-NAME:65b81e36-e507-11e5-bad1-fa163e9117cc.ics
+		        END:VEVENT
+		        END:VCALENDAR
 
 
 
