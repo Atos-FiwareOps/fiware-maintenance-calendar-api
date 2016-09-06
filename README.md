@@ -17,20 +17,22 @@ The maintenance calendar API provides a simplification for the FIWARE-Ops (Fi-Da
 * [Running](#running)
 	* [Running in development mode](#running-in-development-mode)
 	* [Deploying in production mode](#deploying-in-production-mode)
-* [Maintenance Notification system](#Maintenance-Notification-system)
-	* [Installation steps](#Installation-steps)
-	* [Configure the Context Broker Instance](#Configure-the-Context-Broker-Instance)
-	* [Configure the Authentication](#Configure-the-Authentication.)
-	* [Configure the Authorization](#Configure-the-Authorization)
-	* [Configuration Public access](#Configuration-Public-access)
-	* [Installation verification of the Context Broker instance](#Installation-verification-of-the-Context-Broker-instance)
-	* [Configuration of Maintenance Calendar component](#Configuration-of-Maintenance-Calendar-component)
-	* [Installation verification of the Maintenance Calendar component](#Installation-verification-of-the-Maintenance-Calendar-component)
-	* [Subscriptions](#Subscriptions)
+* [Installation verification](#installation-verification)
+* [Configure the users and roles](#configure-the-users-and-roles)
+* [Maintenance Notification system](#maintenance-notification-system)
+	* [Installation steps](#installation-steps)
+	* [Configure the Context Broker Instance](#configure-the-context-broker-instance)
+	* [Configure the Authentication](#configure-the-authentication.)
+	* [Configure the Authorization](#configure-the-authorization)
+	* [Configuration Public access](#configuration-public-access)
+	* [Installation verification of the Context Broker instance](#installation-verification-of-the-context-broker-instance)
+	* [Configuration of Maintenance Calendar component](#configuration-of-maintenance-calendar-component)
+	* [Installation verification of the Maintenance Calendar component](#installation-verification-of-the-maintenance-calendar-component)
+	* [Subscriptions](#subscriptions)
 * [API specification](#api-specification)
-	* [Group Events](#Group-Events)
-	* [Group Nodes](#Group-Nodes)
-	* [Group iCalendar format](#Group-iCalendar-format)
+	* [Group Events](#group-events)
+	* [Group Nodes](#group-nodes)
+	* [Group iCalendar format](#group-icalendar-format)
 * [License](#license)
 
 
@@ -703,7 +705,7 @@ For all this examples, the following prerequisites are necessary:
 
 * The endpoint of the Orion Context broker should be aligned with the instance that has been installed (see previous sections). So, These examples are using the common instance of the Orion Context Broker "orion.lab.fiware.org:1026/v1/subscribeContext", but it should be changed by the correct one (see the installation section).
 
-* If the subscriptions are not public (you can decide it at section "Configuration Public access"), you will need an account in FIWARE Lab. With that account you can obtain a valid authentication token (<Valid-Token>) to use in the REST API calls to Orion. To get that token, get and run the "token_script.sh" script. Introduce your FIWARE Lab user and password when the scripts ask for it (more details [here](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)):
+* If the subscriptions are not public (you can decide it at section "Configuration Public access"), you will need an account in FIWARE Lab. With that account you can obtain a valid authentication token ("<Valid-Token>") to use in the REST API calls to Orion. To get that token, get and run the "token_script.sh" script. Introduce your FIWARE Lab user and password when the scripts ask for it (more details [here](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)):
 
 		$ wget --no-check-certificate https://raw.githubusercontent.com/fgalan/oauth2-example-orion-client/master/token_script.sh
 		$ bash token_script.sh
