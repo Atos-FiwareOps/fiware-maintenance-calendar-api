@@ -10,25 +10,28 @@ The maintenance calendar API provides a simplification for the FIWARE-Ops (Fi-Da
 * [Overall description](#overall-description)
 * [Features implemented](#features-implemented)
 * [Installation](#installation)
-	* [Software Requirements](#software-requirements)
-	* [Installation steps](#installation-steps)
-	* [Configuration](#configuration)
-	* [Installation verification](#installation-verification)
-* [Running](#running)
-	* [Running in development mode](#running-in-development-mode)
-	* [Deploying in production mode](#deploying-in-production-mode)
+	* Maintenance Calendar installation
+		* [Software Requirements](#software-requirements)
+		* [Installation steps](#installation-steps)
+		* [Configuration](#configuration)
+		* [Installation verification](#installation-verification)
+		* [Running](#running)
+			* [Running in development mode](#running-in-development-mode)
+			* [Deploying in production mode](#deploying-in-production-mode)
+		* [Configure the users and roles](#configure-the-users-and-roles)
+	* [Maintenance Notification system Installation](#maintenance-notification-system-installation)
+		* [Installation steps](#installation-steps)
+		* [Configure the Context Broker Instance](#configure-the-context-broker-instance)
+		* [Configure the Authentication](#configure-the-authentication.)
+		* [Configure the Authorization](#configure-the-authorization)
+		* [Configuration Public access](#configuration-public-access)
+		* [Installation verification of the Context Broker instance](#installation-verification-of-the-context-broker-instance)
+		* [Configuration of Maintenance Calendar component](#configuration-of-maintenance-calendar-component)
 * [Installation verification](#installation-verification)
-* [Configure the users and roles](#configure-the-users-and-roles)
-* [Maintenance Notification system](#maintenance-notification-system)
-	* [Installation steps](#installation-steps)
-	* [Configure the Context Broker Instance](#configure-the-context-broker-instance)
-	* [Configure the Authentication](#configure-the-authentication.)
-	* [Configure the Authorization](#configure-the-authorization)
-	* [Configuration Public access](#configuration-public-access)
-	* [Installation verification of the Context Broker instance](#installation-verification-of-the-context-broker-instance)
-	* [Configuration of Maintenance Calendar component](#configuration-of-maintenance-calendar-component)
-	* [Installation verification of the Maintenance Calendar component](#installation-verification-of-the-maintenance-calendar-component)
-	* [Subscriptions](#subscriptions)
+	* [Maintenance Calendar without Notification system](#maintenance-calendar-without-notification-system)
+	* [Maintenance Notification System](#maintenance-notification-system)
+		* [Maintenance Calendar component verification](#maintenance-calendar-component-verification)
+		* [Subscriptions verification](#subscriptions-verification)
 * [API specification](#api-specification)
 	* [Group Events](#group-events)
 	* [Group Nodes](#group-nodes)
@@ -63,7 +66,7 @@ Note: It is out of reach the definition of the structure of the users/organizati
 
 The maintenance calendar component has been developed in conjunction with the [Fi-Dash widget-calendar](https://github.com/fidash/widget-calendar). So, the component exposes a REST API in order to be integrated with the Fi-Dash components; allowing the infrastructure managers to create events for the maintenance periods and the uptime requesters to create events for the non-maintenance periods. Besides, the stakeholders of these events can obtain the complete calendar in format ics in order to be integrated with the other calendars tools such as the Outlook or the Thunderbird. 
 
-Moreover, the component includes a notification system; allowing the consumers to receive notifications when a event is created, modified or deleted. The objective of the notification system is not to manage the events through this mechanism, and it focus on warning to the subscribed users of these notifications. This system is based on the existing GEs called [Orion Context Broker](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker)
+Moreover, the component includes a notification system; allowing the consumers to receive notifications when an event is created, modified or deleted. The objective of the notification system is not to manage the events through this mechanism, and it focus on warning to the subscribed users of these notifications. This system is based on the existing GEs called [Orion Context Broker](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker)
 
 In the following figure the FIWARE Lab components that intervene in the Maintenance Calendar operations are depicted.
 
@@ -78,11 +81,17 @@ The requirements list of this version (v1) is the following one:
 * The FIWARE users can get the information of one specific event and see the details.
 * The infrastructures can delete the events associated to their node, and the users with the uptime requester role can delete events of non-maintenance periods. 
 * The component exposes the maintenance calendar with the iCalendar standard (ics format).
-* The component includes a notification system; allowing the consumers to receive notifications.
+* The component includes a notification system for the maintenance events; allowing the consumers to receive notifications.
 
 ## Installation
 
-### Software requirements
+The installation is composed by two steps:
+* Maintenance Calendar: the component is installed without notifications. Nevertheless, all the functionalities will be working properly.
+* Maintenance Notification System: The different components of the notification will be installed and configured such as the Context Broker GE and the Pep Proxy Wilma, afterwards the Maintenance Calendar component will be ready to be configured to use the Notification System. It is mandatory to have the first steps installed correctly in order to notify the maintenance events.
+
+### Maintenance Calendar installation
+
+#### Software requirements
 
 Before to install the components:
 * [Radicale calendar]( http://radicale.org/). Install a new instance (where you consider) or use existing one. It should be up and running before to install the component. 
@@ -92,7 +101,7 @@ The requirements to install a working copy of the maintenance calendar component
 * Python 2.7 Virtualenv
 * Python 2.7 Pip
 
-### Installation steps
+#### Installation steps
 
 The Maintenance Calendar component is a Python web application that uses the [Flask microframework](http://flask.pocoo.org/). The general recommendations when running Python applications is to use Virtualenv.
 
@@ -124,7 +133,7 @@ The list of steps to get the Maintenance Calendar component installed is the fol
 		$ deactivate
 
 
-#### Download the project
+##### Download the project
 
 Clone the project using git from the
 [Maintenance calendar API](https://github.com/Atos-FiwareOps/fiware-maintenance-calendar-api)
@@ -132,7 +141,7 @@ Clone the project using git from the
 	$ git clone https://github.com/Atos-FiwareOps/fiware-maintenance-calendar-api.git
 
 
-### Configuration
+#### Configuration
 
 The Maintenance Calendar component needs minimal configuration, basically the parameters to connect to the Radicale calendar service and the IdM connection. The first step after cloning the code is to copy the config.py.sample file to config.py.sample (you can find this file in the $PROJECT_DIR/maintenance_calendar/ directory). The parameter that can be adjusted are:
 
@@ -150,14 +159,14 @@ Log configuration
 * log_level: it indicates the level of the logging messages. The possible values are ERROR, WARNING, INFO and DEBUG
 
 
-## Running
+#### Running
 
 Flask offers a lightweight embedded server for development purposes. It allows to run quickly the application without having to worry about production server configurations. It also allows, in combination with other Python tools, to debug the running app, as well as automatic reloading when the code changes (so stop and start it is not needed when a change is performed in the code). Anyway, this is not recommended for production environments.
 
 In that case, several web server projects allow the deployment and run of Python code. For example, when using other application servers, Apache and Nginx can be used. Since the combination possibilities are large, we will explain here one
 we have tested. It is based on Nginx, Gunicorn and Supervisor, running on a Debian stable Linux distribution. Please, feel free to send us feedback about other possible configurations.
 
-### Running in development mode
+##### Running in development mode
 
 Running the Maintenance Calendar component using Flask development server is easy. Please, take into account that to run it, it is necessary to have the proper configuration as stated before. If this have been done, follow the following steps:
 
@@ -176,17 +185,18 @@ Running the Maintenance Calendar component using Flask development server is eas
 	The default URL served by the server is http://127.0.0.1:5000/. Nevertheless, the python file (runserver.py) has been configured to use the 8085 port ("app.run(host='0.0.0.0', port=8085, debug=True)"). You can find more information about the development server in the [Flask documentation webpage](http://flask.pocoo.org/docs/0.10/).
 
 4. Test
+
 		* without token
 		$ curl http://localhost:8085/api/v1
 
 		Could not verify your access level for that URL. You have to login with proper token
 
 		* With the correct token
-		curl http://localhost:8085/api/v1 -H 'X-Auth-Token:<Token_ID>' 
+		$ curl http://localhost:8085/api/v1 -H 'X-Auth-Token:<Token_ID>' 
 
 		Hello World! 
 
-### Deploying in production mode
+##### Deploying in production mode
 
 As mentioned before, several deployment configurations are possible. In this section we described how we deployed this in a production environment using Ubuntu 14, Nginx, Gunicorn, Supervisor and Virtualenv.
 
@@ -217,7 +227,7 @@ The steps are the following:
 
 2. Prepare the component to be executed by gunicorn. 
 
-:* Uncomment the following row in the file maintenance_calendar/__init__.py
+	* Uncomment the following row in the file maintenance_calendar/__init__.py
 
 		from flask import Flask
 		app = Flask(__name__)
@@ -225,7 +235,7 @@ The steps are the following:
 		#uncomment next row, if you want to use gunicorn application such as production environments.
 		import maintenance_calendar.views
 
-:* Update the runserver.py file to change the debug attribute to False ("app.run(host='0.0.0.0', port=8085, debug=False)"). Morover, you need to modify the attribute "log_level" in the confi.py file to ERROR or WARNING. They only need to be changed if we need to investigate or analyze strange behaviour in the production server.
+	* Update the runserver.py file to change the debug attribute to False ("app.run(host='0.0.0.0', port=8085, debug=False)"). Morover, you need to modify the attribute "log_level" in the confi.py file to ERROR or WARNING. They only need to be changed if we need to investigate or analyze strange behaviour in the production server.
 
 
 3. Start Maintenance Calendar and validate that the gunicorn is working correctly
@@ -275,18 +285,21 @@ The steps are the following:
 		  --log-file=-
 
 	Execute the file and validate it.
+
 		$ ./gunicorn_start
 	
 	Test the installation: in another terminal, executing the "Hellow Word" request.
+
 		$ curl -X GET "http://localhost:8000/api/v1" -H 'X-Auth-Token:<Token_ID>'
 
 
 
 5. Install the dependences
+
 		$ sudo aptitude install nginx supervisor
 
 
-3. Create the Supervisor script to start/stop the application:
+6. Create the Supervisor script to start/stop the application:
 
 	It should be placed in /etc/supervisor/conf.d/MaintenanceCalendar.conf and should
 	contain the following parameters:
@@ -298,7 +311,7 @@ The steps are the following:
 		redirect_stderr = true                                      ; Save stderr in the same log
 		environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8 
 
-4. Create Nginx virtual servers
+7. Create Nginx virtual servers
 
 	This script should be placed in /etc/nginx/sites-available/MaintenanceCalendar
 
@@ -349,42 +362,32 @@ The steps are the following:
 			}
 		}
 
-5. Start/restart the application using supervisor:
+8. Start/restart the application using supervisor:
 
 		$ sudo supervisorctl restart MaintenanceCalendar
 
-6. Add the virtual server for the Maintenance Calendar component to the directory of enabled sites and restart Nginx:
+9. Add the virtual server for the Maintenance Calendar component to the directory of enabled sites and restart Nginx:
 
 		$ sudo ln -s /etc/nginx/sites-available/MaintenanceCalendar /etc/nginx/sites-enabled
 		$ sudo service nginx restart
 
-6. Installation verification
+10. Installation verification
 	Execute the "Hellow Word" request.
 		$ curl -X GET "http://<public_ip>:8000/api/v1" -H 'X-Auth-Token:<Token_ID>'
 
 
-
-## Installation verification
-
-To check that everything was correctly installed, run the project in development mode and perform the following HTTP call:
-
-		$  curl -X GET "http://localhost/api/v1/events" -H 'X-Auth-Token:<Token_ID>'
-
-
-It should return an empty JSON list.
-
-## Configure the users and roles
+#### Configure the users and roles
 
 As it has been commented, the IdM is responsible of i) managing the correct roles for the different users and organizations (associating them correctly) ii) validating the token iii) providing the detailed profile of the user for this token. Hence, there will be two main behaviour depends on the IdM answer:
 * The authenticated users without the correct roles can search and see the details of the events, but they cannot create and delete events.
 * The authenticated users with the appropriated roles can manage their events.
 
 
-## Maintenance Notification system
+### Maintenance Notification system Installation
 
 The [Orion Context Broker GE](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker) has been selected as a component to notify the events of the maintenance calendar. The configuration of the Maintenance Calendar component is integrated by default with the public instance of the FIWARE ecosystem, nevertheless, this common instance only authenticates users of the ecosystem and does not introduce any kind of authorization to manage the resources. Hence, in order to introduce our authorization to publish the notifications (only the users with the correct permissions have to be able to publish these notifications), a proprietary instance of the Context Broker GE has to be installed. Coming up next, it is explained how to create and configure the Context Broker and the [PeP proxy Wilwa](http://catalogue.fiware.org/enablers/pep-proxy-wilma) for our own instance. It is not the intention to deep into the installation of the GEs, since they are well described in their documentation.
 
-### Installation steps
+#### Installation steps
 
 * Install the Orion Context Broker GE. There are four ways to install the component as it is indicated [here](http://catalogue.fiware.org/enablers/publishsubscribe-context-broker-orion-context-broker/creating-instances). You can find more details about the installation and the user manual [here](https://fiware-orion.readthedocs.io/en/develop/)
 
@@ -395,7 +398,7 @@ The [Orion Context Broker GE](http://catalogue.fiware.org/enablers/publishsubscr
 As we have commented, it is not the intention to detail here all the steps, since it is well described in the documentation, nevertheless, the different attributes of the PeP Proxy configuration are detailed in order to understand the correlation between them. 
 Hence, we are going to configure the PeP Proxy Wilma GE to authenticate and authorize the users of the FIWARE ecosystem, since without the PeP Proxy our Orion instance is completely accessible for all the users.
 
-### Configure the Context Broker Instance.
+#### Configure the Context Broker Instance.
 
 It is necessary to execute the script bin/ConfigurationMaintenanceCalendarForNotifications.sh to initialise entities for the Maintenance Calendar notification in the Context Broker instance (variable: host_contex_broker, see above bullet list. The following variables should be modified in order to be aligned with the instance of the Context Broker:
 
@@ -403,7 +406,7 @@ It is necessary to execute the script bin/ConfigurationMaintenanceCalendarForNot
 * TOKEN_CONTEXT_BROKER =  Token for accessing to the Context Broker. You need an account in FIWARE Lab to obtain this token, see the [documentation of the Context Broker](https://fiware-orion.readthedocs.io/en/develop/quick_start_guide/index.html)
 
 
-### Configure the Authentication.
+#### Configure the Authentication.
 Modify the config.js file with these attributes values:
 
 		var config = {};
@@ -516,7 +519,7 @@ Now, we need to include this token in the header request
 		  }
 		}
 
-### Configure the Authorization
+#### Configure the Authorization
 
 Configure the PeP proxy Wilma to authorize only some users to execute some  actions. 
 
@@ -556,7 +559,7 @@ The explanation of the different attributes:
 
 You can decide to create more rules to manage all the actions or to open the rest of the action for all the user, see next section:
 
-### Configuration Public access
+#### Configuration Public access
 
 Nevertheless, we can also allow all the users to access to a public part of the component, modifying the configuration file and add the public URLs. For example to access to the UptimeRequest and NodeMaintenace.
 
@@ -598,7 +601,7 @@ Now, we can execute again the request without the token, the response will be al
 
 The subscription is also allowed since it is configured as a public, for the subscription examples see section "Notifications".
 
-### Installation verification of the Context Broker instance
+#### Installation verification of the Context Broker instance
 
 To check that everything was correctly installed, perform the following HTTP call, for example for the Lannion node:
 
@@ -642,7 +645,7 @@ It should return the initial notification.
 	}
 
 
-### Configuration of Maintenance Calendar component
+#### Configuration of Maintenance Calendar component
 
 It is necessary to configure the Maintenance Calender to publish the events in our Orion Context Broker. The parameter to configure the notification are:
 
@@ -657,14 +660,30 @@ It is necessary to configure the Maintenance Calender to publish the events in o
 * timeout_context_broker = It indicates the time-out of the Context Broker communication in seconds.
 
 
-### Installation verification of the Maintenance Calendar component
+
+## Installation verification
+
+### Maintenance Calendar without Notification system
+
+To check that everything was correctly installed, run the project in development mode and perform the following HTTP call:
+
+		$  curl -X GET "http://localhost/api/v1/events" -H 'X-Auth-Token:<Token_ID>'
+
+
+It should return an empty JSON list.
+
+
+### Maintenance Notification System
+
+
+#### Maintenance Calendar component verification
 
 To check that everything was correctly installed; create a new event for the UptimeRequest and perform the following HTTP call to see the new status (where the "<HoST_Context_Broker>" is the endpoint of the own Orion Context Broker instance):
 
-		$  curl -X GET "http://<HoST_Context_Broker>:1026/v1/contextEntities/maintenancecalendar:UptimeRequest" -H 'X-Auth-Token:<Token_ID>'
+		$  curl -X GET "http://<HoST_Context_Broker>:1026/v1/contextEntities/maintenancecalendar:UptimeRequest" 
 
 
-It should return the initial notification.
+It should return the UptimeRequest event that you have created.
 
 	{
 	  "contextElement" : {
@@ -696,7 +715,7 @@ It should return the initial notification.
 	}
 
 
-### Subscriptions
+#### Subscriptions verification
 
 The consumers only need to subscribe in the events that they want to receive the notifications. This section only covers some examples of subscriptions for: i) specific node events ii) all the nodes events iii) UptimeRequest events and iv) all the events of the calendar.
 For all this examples, the following prerequisites are necessary:
@@ -849,6 +868,7 @@ The message body that the consumer will receive has the following structure:
 
 
 The notifications system is completely flexible, so the subscribers can be warned only for the specific attributes of the nodes and UptimeRequest events, you only need to follow the documentation of the [Orion Context Broker](https://fiware-orion.readthedocs.io/en/develop/index.html).
+
 
 
 ## API specification
