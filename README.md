@@ -229,11 +229,11 @@ The steps are the following:
 
 	* Uncomment the following row in the file maintenance_calendar/__init__.py
 
-		from flask import Flask
-		app = Flask(__name__)
-		#This import allows the gunicorn to see the views
-		#uncomment next row, if you want to use gunicorn application such as production environments.
-		import maintenance_calendar.views
+			from flask import Flask
+			app = Flask(__name__)
+			#This import allows the gunicorn to see the views
+			#uncomment next row, if you want to use gunicorn application such as production environments.
+			import maintenance_calendar.views
 
 	* Update the runserver.py file to change the debug attribute to False ("app.run(host='0.0.0.0', port=8085, debug=False)"). Morover, you need to modify the attribute "log_level" in the confi.py file to ERROR or WARNING. They only need to be changed if we need to investigate or analyze strange behaviour in the production server.
 
