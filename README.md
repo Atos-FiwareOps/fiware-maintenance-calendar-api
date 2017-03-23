@@ -143,7 +143,7 @@ Clone the project using git from the
 
 #### Configuration
 
-The Maintenance Calendar component needs minimal configuration, basically the parameters to connect to the Radicale calendar service and the IdM connection. The first step after cloning the code is to copy the config.py.sample file to config.py.sample (you can find this file in the $PROJECT_DIR/maintenance_calendar/ directory). The parameter that can be adjusted are:
+The Maintenance Calendar component needs minimal configuration, basically the parameters to connect to the Radicale calendar service and the IdM connection. The first step after cloning the code is to copy the config.py.sample file to config.py (you can find this file in the $PROJECT_DIR/maintenance_calendar/ directory). The parameter that can be adjusted are:
 
 Basic Parameters
 * url_keystone: The url of the FIWARE IdM. It should contain the compleate URL including the parameter of the token, for example https://account.lab.fiware.org/user/?access_token=".
