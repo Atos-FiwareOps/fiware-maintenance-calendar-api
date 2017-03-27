@@ -13,6 +13,8 @@ from maintenance_calendar.model import Calendar, Event
 from exceptions import UnAuthorizedMethodError
 
 from maintenance_calendar import config
+from werkzeug.contrib.cache import SimpleCache
+
 import ast
 
 from maintenance_calendar.contextbroker.context_broker_notification import ContextBrokerNotificator
@@ -20,6 +22,8 @@ from maintenance_calendar.contextbroker.context_broker_notification import Conte
 import logging
 
 log = logging.getLogger(__name__)
+
+cache = SimpleCache()
 
 # set the secret key.  keep this really secret:
 #To generate the new secret Key use this:
@@ -162,9 +166,14 @@ def get_events():
     
     if log.isEnabledFor(logging.DEBUG):
         log.debug ("get_events(): args - " + str(location) + str(start_date) + str(end_date))
-    calendarSynchronizer = CalendarSynchronizer()
-    calendar_collection = calendarSynchronizer.get_events(location, start_date, end_date)
-    response_body = calendar_collection.serialize(request.accept_mimetypes)  
+
+    cached_events = cache.get('events')
+    if cached_events is None:
+        calendar_synchronizer = CalendarSynchronizer()
+        cached_events = calendar_synchronizer.get_events(location, start_date, end_date)
+        cache.set('events', cached_events, 5 * 60)
+
+    response_body = cached_events.serialize(request.accept_mimetypes)
     return Response(response_body, mimetype=request.accept_mimetypes[0][0]) 
 
 @app.route("/api/v1/events", methods=['POST'])
